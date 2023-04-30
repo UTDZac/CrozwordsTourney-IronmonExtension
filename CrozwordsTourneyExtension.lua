@@ -5,7 +5,7 @@ local function CrozwordsTourneyExtension()
 	self.name = "Crozwords Tourney Tracker"
 	self.author = "UTDZac"
 	self.description = "This extension adds extra functionality to the Tracker for the FRLG tournament, such as counting milestone points."
-	self.version = "0.1"
+	self.version = "0.2"
 	self.url = "https://github.com/UTDZac/CrozwordsTourney-IronmonExtension"
 
 	function self.checkForUpdates()
@@ -40,7 +40,23 @@ local function CrozwordsTourneyExtension()
 		-- (3) Gym 1 Brock
 		Gym1Brock = { points = 3, },
 		-- FULL CLEAR - Mt. Moon
-		MtMoon = { points = 1, },
+		MtMoon = {
+			points = 1,
+			checkIfObtained = function(this)
+				-- Must defeat all trainers...
+				for _, isDefeated in pairs(this.trainers or {}) do
+					if not isDefeated then
+						return
+					end
+				end
+				-- ... And escape the area ...
+				if TrackerAPI.getMapId() >= 114 and TrackerAPI.getMapId() <= 116 then
+					return
+				end
+				-- ... Then the milestone is obtained
+				this.obtained = true
+			end,
+		},
 		-- FULL CLEAR - Boat Rival & SS Anne
 		SSAnne = {
 			points = 1,
@@ -65,7 +81,23 @@ local function CrozwordsTourneyExtension()
 		-- Gym 2 Misty & Gym 3 Surge
 		Gym2MistyAnd3Surge = { points = 1, },
 		-- FULL CLEAR - Rock Tunnel
-		RockTunnel = { points = 1, },
+		RockTunnel = {
+			points = 1,
+			checkIfObtained = function(this)
+				-- Must defeat all trainers...
+				for _, isDefeated in pairs(this.trainers or {}) do
+					if not isDefeated then
+						return
+					end
+				end
+				-- ... And escape the area ...
+				if TrackerAPI.getMapId() >= 154 and TrackerAPI.getMapId() <= 155 then
+					return
+				end
+				-- ... Then the milestone is obtained
+				this.obtained = true
+			end,
+		},
 		-- Giovanni 1 and Rocket Hideout
 		RocketHideout = {
 			points = 1,
@@ -78,6 +110,9 @@ local function CrozwordsTourneyExtension()
 				end
 				-- ... And escape the area ...
 				if TrackerAPI.getMapId() >= 128 and TrackerAPI.getMapId() <= 131 then
+					return
+				end
+				if TrackerAPI.getMapId() >= 224 and TrackerAPI.getMapId() <= 225 then -- entrance and elevator
 					return
 				end
 				-- ... Then the milestone is obtained
@@ -120,6 +155,9 @@ local function CrozwordsTourneyExtension()
 				if TrackerAPI.getMapId() >= 132 and TrackerAPI.getMapId() <= 142 then
 					return
 				end
+				if TrackerAPI.getMapId() == 229 then -- elevator
+					return
+				end
 				-- ... Then the milestone is obtained
 				this.obtained = true
 			end,
@@ -136,6 +174,9 @@ local function CrozwordsTourneyExtension()
 				end
 				-- ... And escape the area ...
 				if TrackerAPI.getMapId() >= 132 and TrackerAPI.getMapId() <= 142 then
+					return
+				end
+				if TrackerAPI.getMapId() == 229 then -- elevator
 					return
 				end
 				-- ... Then the milestone is obtained
