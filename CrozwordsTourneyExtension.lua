@@ -5,7 +5,7 @@ local function CrozwordsTourneyExtension()
 	self.name = "Crozwords Tourney Tracker"
 	self.author = "UTDZac"
 	self.description = "This extension adds extra functionality to the Tracker for the FRLG tournament, such as counting milestone points."
-	self.version = "0.2"
+	self.version = "0.3"
 	self.url = "https://github.com/UTDZac/CrozwordsTourney-IronmonExtension"
 
 	function self.checkForUpdates()
@@ -15,6 +15,38 @@ local function CrozwordsTourneyExtension()
 
 		local isUpdateAvailable = Utils.checkForVersionUpdate(versionCheckUrl, self.version, versionResponsePattern, nil)
 		return isUpdateAvailable, downloadUrl
+	end
+
+	local Zones = {
+		MtMoon = { [114] = true, [115] = true, [116] = true },
+		SSAnne = { [120] = true, [121] = true, [122] = true, [123] = true, [177] = true, [178] = true },
+		RockTunnel = { [154] = true, [155] = true },
+		RocketHideout = { [128] = true, [129] = true, [130] = true, [131] = true, [224] = true, [225] = true },
+		PokemonTower = { [161] = true, [162] = true, [163] = true, [164] = true, [165] = true, [166] = true, [167] = true },
+		SilphCo = { [132] = true, [133] = true, [134] = true, [135] = true, [136] = true, [137] = true, [138] = true, [139] = true, [140] = true, [141] = true, [142] = true, [229] = true },
+		CinnabarMansion = { [143] = true, [144] = true, [145] = true, [146] = true },
+	}
+
+	-- Common conditions for obtaining milestones
+	local defeatAtLeastOne = function(trainers)
+		for _, isDefeated in pairs(trainers or {}) do
+			if isDefeated then
+				return true
+			end
+		end
+		return false
+	end
+	local defeatAll = function(trainers)
+		for _, isDefeated in pairs(trainers or {}) do
+			if not isDefeated then
+				return false
+			end
+		end
+		return true
+	end
+	local escapedZone = function(zone)
+		-- "Escape" successful if there is no associated zone, or the player isn't there anymore
+		return not zone or not zone[TrackerAPI.getMapId()]
 	end
 
 	local Milestones = {
@@ -27,115 +59,36 @@ local function CrozwordsTourneyExtension()
 		-- Rival 2 Viridian
 		Rival2Viridian = {
 			points = 1,
-			checkIfObtained = function(this)
-				-- If any rivals are defeated
-				for _, isDefeated in pairs(this.trainers or {}) do
-					if isDefeated then
-						this.obtained = true
-						break
-					end
-				end
-			end,
+			checkIfObtained = function(this) return defeatAtLeastOne(this.trainers) end,
 		},
 		-- (3) Gym 1 Brock
 		Gym1Brock = { points = 3, },
 		-- FULL CLEAR - Mt. Moon
 		MtMoon = {
 			points = 1,
-			checkIfObtained = function(this)
-				-- Must defeat all trainers...
-				for _, isDefeated in pairs(this.trainers or {}) do
-					if not isDefeated then
-						return
-					end
-				end
-				-- ... And escape the area ...
-				if TrackerAPI.getMapId() >= 114 and TrackerAPI.getMapId() <= 116 then
-					return
-				end
-				-- ... Then the milestone is obtained
-				this.obtained = true
-			end,
+			zone = Zones.MtMoon,
 		},
 		-- FULL CLEAR - Boat Rival & SS Anne
 		SSAnne = {
 			points = 1,
-			checkIfObtained = function(this)
-				-- Must defeat all trainers...
-				for _, isDefeated in pairs(this.trainers or {}) do
-					if not isDefeated then
-						return
-					end
-				end
-				-- ... And escape the area ...
-				if TrackerAPI.getMapId() >= 120 and TrackerAPI.getMapId() <= 123 then
-					return
-				end
-				if TrackerAPI.getMapId() >= 177 and TrackerAPI.getMapId() <= 178 then
-					return
-				end
-				-- ... Then the milestone is obtained
-				this.obtained = true
-			end,
+			zone = Zones.SSAnne,
 		},
 		-- Gym 2 Misty & Gym 3 Surge
 		Gym2MistyAnd3Surge = { points = 1, },
 		-- FULL CLEAR - Rock Tunnel
 		RockTunnel = {
 			points = 1,
-			checkIfObtained = function(this)
-				-- Must defeat all trainers...
-				for _, isDefeated in pairs(this.trainers or {}) do
-					if not isDefeated then
-						return
-					end
-				end
-				-- ... And escape the area ...
-				if TrackerAPI.getMapId() >= 154 and TrackerAPI.getMapId() <= 155 then
-					return
-				end
-				-- ... Then the milestone is obtained
-				this.obtained = true
-			end,
+			zone = Zones.RockTunnel,
 		},
 		-- Giovanni 1 and Rocket Hideout
 		RocketHideout = {
 			points = 1,
-			checkIfObtained = function(this)
-				-- Must defeat all trainers...
-				for _, isDefeated in pairs(this.trainers or {}) do
-					if not isDefeated then
-						return
-					end
-				end
-				-- ... And escape the area ...
-				if TrackerAPI.getMapId() >= 128 and TrackerAPI.getMapId() <= 131 then
-					return
-				end
-				if TrackerAPI.getMapId() >= 224 and TrackerAPI.getMapId() <= 225 then -- entrance and elevator
-					return
-				end
-				-- ... Then the milestone is obtained
-				this.obtained = true
-			end,
+			zone = Zones.RocketHideout,
 		},
 		-- FULL CLEAR - Tower Rival & Pokemon Tower
 		PokemonTower = {
 			points = 1,
-			checkIfObtained = function(this)
-				-- Must defeat all trainers...
-				for _, isDefeated in pairs(this.trainers or {}) do
-					if not isDefeated then
-						return
-					end
-				end
-				-- ... And escape the area ...
-				if TrackerAPI.getMapId() >= 161 and TrackerAPI.getMapId() <= 167 then
-					return
-				end
-				-- ... Then the milestone is obtained
-				this.obtained = true
-			end,
+			zone = Zones.PokemonTower,
 		},
 		-- Gym 4 Erika
 		Gym4Erika = { points = 1, },
@@ -144,62 +97,17 @@ local function CrozwordsTourneyExtension()
 		-- Silph Rival and Giovanni 2 (Awarded on exit.)
 		SilphEscape = {
 			points = 1,
-			checkIfObtained = function(this)
-				-- Must defeat all trainers...
-				for _, isDefeated in pairs(this.trainers or {}) do
-					if not isDefeated then
-						return
-					end
-				end
-				-- ... And escape the area ...
-				if TrackerAPI.getMapId() >= 132 and TrackerAPI.getMapId() <= 142 then
-					return
-				end
-				if TrackerAPI.getMapId() == 229 then -- elevator
-					return
-				end
-				-- ... Then the milestone is obtained
-				this.obtained = true
-			end,
+			zone = Zones.SilphCo,
 		},
 		-- (3) FULL CLEAR - Silph Co.
 		SilphFullClear = {
 			points = 3,
-			checkIfObtained = function(this)
-				-- Must defeat all trainers...
-				for _, isDefeated in pairs(this.trainers or {}) do
-					if not isDefeated then
-						return
-					end
-				end
-				-- ... And escape the area ...
-				if TrackerAPI.getMapId() >= 132 and TrackerAPI.getMapId() <= 142 then
-					return
-				end
-				if TrackerAPI.getMapId() == 229 then -- elevator
-					return
-				end
-				-- ... Then the milestone is obtained
-				this.obtained = true
-			end,
+			zone = Zones.SilphCo,
 		},
 		-- FULL CLEAR - Cinnabar Mansion
 		CinnabarMansion = {
 			points = 1,
-			checkIfObtained = function(this)
-				-- Must defeat all trainers...
-				for _, isDefeated in pairs(this.trainers or {}) do
-					if not isDefeated then
-						return
-					end
-				end
-				-- ... And escape the area ...
-				if TrackerAPI.getMapId() >= 143 and TrackerAPI.getMapId() <= 146 then
-					return
-				end
-				-- ... Then the milestone is obtained
-				this.obtained = true
-			end,
+			zone = Zones.CinnabarMansion,
 		},
 		-- Gym 6 Sabrina
 		Gym6Sabrina = { points = 1, },
@@ -210,15 +118,7 @@ local function CrozwordsTourneyExtension()
 		-- VR Rival
 		RivalVictoryRoad = {
 			points = 1,
-			checkIfObtained = function(this)
-				-- If any rivals are defeated
-				for _, isDefeated in pairs(this.trainers or {}) do
-					if isDefeated then
-						this.obtained = true
-						break
-					end
-				end
-			end,
+			checkIfObtained = function(this) return defeatAtLeastOne(this.trainers) end,
 		},
 		-- Lorelei
 		E4Lorelei = { points = 1, },
@@ -231,15 +131,7 @@ local function CrozwordsTourneyExtension()
 		-- (5) CHAMP
 		E4Champ = {
 			points = 5,
-			checkIfObtained = function(this)
-				-- If any rivals are defeated
-				for _, isDefeated in pairs(this.trainers or {}) do
-					if isDefeated then
-						this.obtained = true
-						break
-					end
-				end
-			end,
+			checkIfObtained = function(this) return defeatAtLeastOne(this.trainers) end,
 		},
 	}
 	local TrainerMilestoneMap = {
@@ -438,7 +330,6 @@ local function CrozwordsTourneyExtension()
 
 	local resetMilestones = function()
 		-- ExtSettingsData.TotalPoints.value = 0 -- don't reset points, these need to accumulate across multiple seeds
-
 		ExtSettingsData.CurrentMilestones.value = ""
 
 		-- Add the trainer list to each milestone
@@ -454,15 +345,10 @@ local function CrozwordsTourneyExtension()
 	local checkMilestoneForPoints = function(milestone)
 		if not milestone or milestone.obtained then return end
 
-		if type(milestone.checkIfObtained) == "function" then
-			milestone:checkIfObtained()
-		else
-			-- Default to checking if all trainers in the milestone are defeated to obtain it
-			for _, isDefeated in pairs(milestone.trainers or {}) do
-				if not isDefeated then
-					return
-				end
-			end
+		if type(milestone.checkIfObtained) == "function" and milestone:checkIfObtained() then
+			milestone.obtained = true
+		elseif defeatAll(milestone.trainers) and escapedZone(milestone.zone) then
+			-- Default condition for a milestone being completed (it's the most common)
 			milestone.obtained = true
 		end
 
@@ -487,7 +373,6 @@ local function CrozwordsTourneyExtension()
 			ExtSettingsData.CurrentMilestones.value = table.concat(exportTable, ",")
 		end
 	end
-
 
 	local function loadSettingsData()
 		for _, optionObj in pairs(ExtSettingsData) do
@@ -516,8 +401,6 @@ local function CrozwordsTourneyExtension()
 			saveSettingsData()
 			Program.redraw(true)
 		end
-
-		self.textBox = nil
 	end
 
 	local function openOptionsPopup()
@@ -529,15 +412,15 @@ local function CrozwordsTourneyExtension()
 		Utils.setFormLocation(form, 100, 50)
 
 		forms.label(form, "Enter a number of points:", 48, 10, 175, 20)
-		self.textBox = forms.textbox(form, ExtSettingsData.TotalPoints.value or 0, 175, 30, "UNSIGNED", 50, 30)
+		local textBox = forms.textbox(form, ExtSettingsData.TotalPoints.value or 0, 175, 30, "UNSIGNED", 50, 30)
 
 		forms.button(form, "Reset", function()
-			forms.settext(self.textBox, 0)
+			forms.settext(textBox, 0)
 		end, 235, 28)
-
 		forms.button(form, "Save", function()
-			local formInput = forms.gettext(self.textBox)
+			local formInput = forms.gettext(textBox)
 			applyOptionsCallback(formInput)
+
 			client.unpause()
 			forms.destroy(form)
 		end, 60, 60)
@@ -554,8 +437,8 @@ local function CrozwordsTourneyExtension()
 	local createButtons = function ()
 		TrackerScreen.Buttons.PointTotalBtn = {
 			type = Constants.ButtonTypes.NO_BORDER,
-			text = "",
-			getText = function() return tostring(ExtSettingsData.TotalPoints.value or 0) end,
+			-- text = "",
+			-- getText = function() return "" end,
 			textColor = "Default text",
 			box = { Constants.SCREEN.WIDTH + 76, 67, 22, 11 },
 			isVisible = function() return shouldShowPoints() end,
@@ -571,8 +454,8 @@ local function CrozwordsTourneyExtension()
 		}
 		TrackerScreen.Buttons.PointIncrementBtn = {
 			type = Constants.ButtonTypes.NO_BORDER,
-			text = "",
-			getText = function() return "" end,
+			-- text = "",
+			-- getText = function() return "" end,
 			textColor = "Positive text",
 			box = { Constants.SCREEN.WIDTH + 70, 67, 8, 4 },
 			isVisible = function() return shouldShowPoints() end,
@@ -591,8 +474,8 @@ local function CrozwordsTourneyExtension()
 		}
 		TrackerScreen.Buttons.PointDecrementBtn = {
 			type = Constants.ButtonTypes.NO_BORDER,
-			text = "",
-			getText = function() return "" end,
+			-- text = "",
+			-- getText = function() return "" end,
 			textColor = "Negative text",
 			box = { Constants.SCREEN.WIDTH + 70, 73, 7, 4 },
 			isVisible = function() return shouldShowPoints() end,
@@ -630,7 +513,7 @@ local function CrozwordsTourneyExtension()
 		createButtons()
 		resetMilestones()
 
-		-- If a previous game is loaded and being continued, keep milestones; otherwise, only keep points and reset milestones
+		-- If a previous game is loaded and being continued, keep milestones; otherwise, just keep points and reset milestones
 		if Tracker.DataMessage:find(Tracker.LoadStatusMessages.fromFile) ~= nil then
 			loadSettingsData()
 		else
