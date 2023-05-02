@@ -5,7 +5,7 @@ local function CrozwordsTourneyExtension()
 	self.name = "Crozwords Tourney Tracker"
 	self.author = "UTDZac"
 	self.description = "This extension adds extra functionality to the Tracker for the FRLG tournament, such as counting milestone points."
-	self.version = "0.4"
+	self.version = "0.5"
 	self.url = "https://github.com/UTDZac/CrozwordsTourney-IronmonExtension"
 
 	function self.checkForUpdates()
@@ -213,10 +213,11 @@ local function CrozwordsTourneyExtension()
 		[451] = Milestones.PokemonTower,
 		[452] = Milestones.PokemonTower,
 		[453] = Milestones.PokemonTower,
-		-- [369] = Milestones.PokemonTower, -- unconfirmed/unneeded
-		-- [370] = Milestones.PokemonTower, -- unconfirmed
-		-- [371] = Milestones.PokemonTower, -- unconfirmed
-		-- [372] = Milestones.PokemonTower, -- unconfirmed
+		[369] = Milestones.PokemonTower,
+		[370] = Milestones.PokemonTower,
+		[371] = Milestones.PokemonTower,
+
+		-- [372] = Milestones.????, -- no idea where this trainer is located
 
 		[417] = Milestones.Gym4Erika,
 		[418] = Milestones.Gym5Koga,
@@ -437,29 +438,31 @@ local function CrozwordsTourneyExtension()
 		Utils.setFormLocation(form, 100, 50)
 
 
-		local rightCol = popupWidth - 70
+		local rightCol = popupWidth - 50
 		local yOffset = 10
-		local canvas = { x = 0, y = 10, width = rightCol - 20, height = popupHeight - 90, }
+		local canvas = { x = 0, y = 10, width = rightCol - 40, height = popupHeight - 90, }
 		canvas.area = forms.pictureBox(form, canvas.x, canvas.y, canvas.width, canvas.height)
 
 		local optionAutoCount = forms.checkbox(form, "", rightCol, yOffset)
-		forms.drawText(canvas.area, canvas.width, yOffset-6, ExtSettingsData.AutoCountPoints.label, fontColor, 0x00000000, fontSize, fontFamily, fontStyle, "right")
 		forms.setproperty(optionAutoCount, "Checked", Utils.inlineIf(ExtSettingsData.AutoCountPoints.value, "True", "False"))
+		forms.drawText(canvas.area, canvas.width, yOffset-6, ExtSettingsData.AutoCountPoints.label, fontColor, 0x00000000, fontSize, fontFamily, fontStyle, "right")
 		yOffset = yOffset + 25
 
 		local optionRequireEscape = forms.checkbox(form, "", rightCol, yOffset)
-		forms.drawText(canvas.area, canvas.width, yOffset-6, ExtSettingsData.RequireEscapeArea.label, fontColor, 0x00000000, fontSize, fontFamily, fontStyle, "right")
 		forms.setproperty(optionRequireEscape, "Checked", Utils.inlineIf(ExtSettingsData.RequireEscapeArea.value, "True", "False"))
+		forms.drawText(canvas.area, canvas.width, yOffset-6, ExtSettingsData.RequireEscapeArea.label, fontColor, 0x00000000, fontSize, fontFamily, fontStyle, "right")
 		yOffset = yOffset + 25
 
-		local textBox = forms.textbox(form, ExtSettingsData.TotalPoints.value or 0, 34, 20, "UNSIGNED", rightCol, yOffset+2)
+		local textBox = forms.textbox(form, ExtSettingsData.TotalPoints.value or 0, 34, 20, "UNSIGNED", rightCol-20, yOffset+2)
+		forms.setproperty(textBox, "TextAlign", "Right")
 		forms.drawText(canvas.area, canvas.width, yOffset-6, ExtSettingsData.TotalPoints.label, fontColor, 0x00000000, fontSize, fontFamily, fontStyle, "right")
 		yOffset = yOffset + 25
 
 		yOffset = yOffset + 10
-		forms.button(form, "Reset Points", function()
+		local resetButton = forms.button(form, "Reset Points", function()
 			forms.settext(textBox, 0)
-		end, rightCol-55, yOffset, 90, 23)
+		end, rightCol-75, yOffset, 90, 23)
+		forms.setproperty(resetButton, "TextAlign", "Right")
 		forms.button(form, "Save", function()
 			local formInput = forms.gettext(textBox)
 			applyOptionsCallback(forms.ischecked(optionAutoCount), forms.ischecked(optionRequireEscape), formInput)
