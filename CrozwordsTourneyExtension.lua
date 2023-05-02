@@ -5,7 +5,7 @@ local function CrozwordsTourneyExtension()
 	self.name = "Crozwords Tourney Tracker"
 	self.author = "UTDZac"
 	self.description = "This extension adds extra functionality to the Tracker for the FRLG tournament, such as counting milestone points."
-	self.version = "0.3"
+	self.version = "0.4"
 	self.url = "https://github.com/UTDZac/CrozwordsTourney-IronmonExtension"
 
 	function self.checkForUpdates()
@@ -21,7 +21,7 @@ local function CrozwordsTourneyExtension()
 		MtMoon = { [114] = true, [115] = true, [116] = true },
 		SSAnne = { [120] = true, [121] = true, [122] = true, [123] = true, [177] = true, [178] = true },
 		RockTunnel = { [154] = true, [155] = true },
-		RocketHideout = { [128] = true, [129] = true, [130] = true, [131] = true, [224] = true, [225] = true },
+		RocketHideout = { [27] = true, [128] = true, [129] = true, [130] = true, [131] = true, [224] = true, [225] = true },
 		PokemonTower = { [161] = true, [162] = true, [163] = true, [164] = true, [165] = true, [166] = true, [167] = true },
 		SilphCo = { [132] = true, [133] = true, [134] = true, [135] = true, [136] = true, [137] = true, [138] = true, [139] = true, [140] = true, [141] = true, [142] = true, [229] = true },
 		CinnabarMansion = { [143] = true, [144] = true, [145] = true, [146] = true },
@@ -287,33 +287,21 @@ local function CrozwordsTourneyExtension()
 	local highlightFrames = 0 -- These frames count down and make the point count shown "highlighted"
 	local ExtLabel = "CrozwordsTourney" -- to be prepended to all other settings here
 	local ExtSettingsData = {
+		AutoCountPoints = {
+			value = true, -- default
+			label = "Automatically count points for milestones completed",
+		},
+		RequireEscapeArea = {
+			value = true, -- default
+			label = "Award points only after leaving a dungeon (non-gym)",
+		},
 		TotalPoints = {
-			key = "TotalPoints",
-			value = 0,
-			load = function(this)
-				this.value = TrackerAPI.getExtensionSetting(ExtLabel, this.key) or this.value
-				return this.value
-			end,
-			save = function(this)
-				if this.value then
-					TrackerAPI.saveExtensionSetting(ExtLabel, this.key, this.value)
-				end
-			end,
+			value = 0, -- default
+			label = "Current point total",
 			addPoints = function(this, val) if this.value then this.value = this.value + (val or 0) end end,
 		},
 		CurrentMilestones = {
-			key = "CurrentMilestones",
 			value = "",
-			load = function(this)
-				this.value = TrackerAPI.getExtensionSetting(ExtLabel, this.key) or this.value
-				this:parseMilestones()
-				return this.value
-			end,
-			save = function(this)
-				if this.value then
-					TrackerAPI.saveExtensionSetting(ExtLabel, this.key, this.value)
-				end
-			end,
 			parseMilestones = function(this)
 				this.value = this.value or ""
 				for key in (this.value .. ","):gmatch("([^,]*),") do
@@ -324,6 +312,25 @@ local function CrozwordsTourneyExtension()
 			end,
 		},
 	}
+	for key, setting in pairs(ExtSettingsData) do
+		setting.key = tostring(key)
+		if type(setting.load) ~= "function" then
+			setting.load = function(this)
+				local loadedValue = TrackerAPI.getExtensionSetting(ExtLabel, this.key)
+				if loadedValue ~= nil then
+					this.value = loadedValue
+				end
+				return loadedValue
+			end
+		end
+		if type(setting.save) ~= "function" then
+			setting.save = function(this)
+				if this.value ~= nil then
+					TrackerAPI.saveExtensionSetting(ExtLabel, this.key, this.value)
+				end
+			end
+		end
+	end
 
 	-- Helper Functions
 	local isSupported = function() return GameSettings.game == 3 end
@@ -347,7 +354,7 @@ local function CrozwordsTourneyExtension()
 
 		if type(milestone.checkIfObtained) == "function" and milestone:checkIfObtained() then
 			milestone.obtained = true
-		elseif defeatAll(milestone.trainers) and escapedZone(milestone.zone) then
+		elseif defeatAll(milestone.trainers) and (not ExtSettingsData.RequireEscapeArea.value or escapedZone(milestone.zone)) then
 			-- Default condition for a milestone being completed (it's the most common)
 			milestone.obtained = true
 		end
@@ -380,6 +387,7 @@ local function CrozwordsTourneyExtension()
 				optionObj:load()
 			end
 		end
+		ExtSettingsData.CurrentMilestones:parseMilestones()
 	end
 
 	local function saveSettingsData()
@@ -390,14 +398,27 @@ local function CrozwordsTourneyExtension()
 		end
 	end
 
-	local function applyOptionsCallback(formInput)
-		local inputAsNumber = tonumber(formInput or "")
-		if inputAsNumber == nil then
+	local function applyOptionsCallback(autoCount, requireEscape, pointValue)
+		local pointsAsNumber = tonumber(pointValue or "")
+		if pointsAsNumber == nil then
 			return
 		end
 
-		if ExtSettingsData.TotalPoints.value ~= inputAsNumber then
-			ExtSettingsData.TotalPoints.value = inputAsNumber
+		local settingsWereChange = false
+		if ExtSettingsData.AutoCountPoints.value ~= autoCount then
+			ExtSettingsData.AutoCountPoints.value = autoCount
+			settingsWereChange = true
+		end
+		if ExtSettingsData.RequireEscapeArea.value ~= requireEscape then
+			ExtSettingsData.RequireEscapeArea.value = requireEscape
+			settingsWereChange = true
+		end
+		if ExtSettingsData.TotalPoints.value ~= pointsAsNumber then
+			ExtSettingsData.TotalPoints.value = pointsAsNumber
+			settingsWereChange = true
+		end
+
+		if settingsWereChange then
 			saveSettingsData()
 			Program.redraw(true)
 		end
@@ -405,29 +426,51 @@ local function CrozwordsTourneyExtension()
 
 	local function openOptionsPopup()
 		if not Main.IsOnBizhawk() then return end
+
+		local popupWidth, popupHeight = 480, 170
+		local fontFamily, fontSize, fontColor, fontStyle = "Arial", 14, 0xFF000000, "bold"
+
 		Program.destroyActiveForm()
 		local formName = string.format("%s Settings", self.name)
-		local form = forms.newform(320, 130, formName, function() client.unpause() end)
+		local form = forms.newform(popupWidth, popupHeight, formName, function() client.unpause() end)
 		Program.activeFormId = form
 		Utils.setFormLocation(form, 100, 50)
 
-		forms.label(form, "Enter a number of points:", 48, 10, 175, 20)
-		local textBox = forms.textbox(form, ExtSettingsData.TotalPoints.value or 0, 175, 30, "UNSIGNED", 50, 30)
 
-		forms.button(form, "Reset", function()
+		local rightCol = popupWidth - 70
+		local yOffset = 10
+		local canvas = { x = 0, y = 10, width = rightCol - 20, height = popupHeight - 90, }
+		canvas.area = forms.pictureBox(form, canvas.x, canvas.y, canvas.width, canvas.height)
+
+		local optionAutoCount = forms.checkbox(form, "", rightCol, yOffset)
+		forms.drawText(canvas.area, canvas.width, yOffset-6, ExtSettingsData.AutoCountPoints.label, fontColor, 0x00000000, fontSize, fontFamily, fontStyle, "right")
+		forms.setproperty(optionAutoCount, "Checked", Utils.inlineIf(ExtSettingsData.AutoCountPoints.value, "True", "False"))
+		yOffset = yOffset + 25
+
+		local optionRequireEscape = forms.checkbox(form, "", rightCol, yOffset)
+		forms.drawText(canvas.area, canvas.width, yOffset-6, ExtSettingsData.RequireEscapeArea.label, fontColor, 0x00000000, fontSize, fontFamily, fontStyle, "right")
+		forms.setproperty(optionRequireEscape, "Checked", Utils.inlineIf(ExtSettingsData.RequireEscapeArea.value, "True", "False"))
+		yOffset = yOffset + 25
+
+		local textBox = forms.textbox(form, ExtSettingsData.TotalPoints.value or 0, 34, 20, "UNSIGNED", rightCol, yOffset+2)
+		forms.drawText(canvas.area, canvas.width, yOffset-6, ExtSettingsData.TotalPoints.label, fontColor, 0x00000000, fontSize, fontFamily, fontStyle, "right")
+		yOffset = yOffset + 25
+
+		yOffset = yOffset + 10
+		forms.button(form, "Reset Points", function()
 			forms.settext(textBox, 0)
-		end, 235, 28)
+		end, rightCol-55, yOffset, 90, 23)
 		forms.button(form, "Save", function()
 			local formInput = forms.gettext(textBox)
-			applyOptionsCallback(formInput)
+			applyOptionsCallback(forms.ischecked(optionAutoCount), forms.ischecked(optionRequireEscape), formInput)
 
 			client.unpause()
 			forms.destroy(form)
-		end, 60, 60)
+		end, 130, yOffset)
 		forms.button(form, "Cancel", function()
 			client.unpause()
 			forms.destroy(form)
-		end, 145, 60)
+		end, 210, yOffset)
 	end
 
 	local shouldShowPoints = function()
@@ -540,7 +583,9 @@ local function CrozwordsTourneyExtension()
 			Options["Track PC Heals"] = false
 		end
 
-		checkAllMilestones()
+		if ExtSettingsData.AutoCountPoints.value then
+			checkAllMilestones()
+		end
 
 		if highlightFrames > 0 then
 			highlightFrames = highlightFrames - 30
@@ -554,7 +599,7 @@ local function CrozwordsTourneyExtension()
 	end
 
 	function self.afterBattleEnds()
-		if not isSupported() then return end
+		if not isSupported() or not ExtSettingsData.AutoCountPoints.value then return end
 
 		local wonTheBattle = (Memory.readbyte(GameSettings.gBattleOutcome) == 1)
 		if not wonTheBattle then
