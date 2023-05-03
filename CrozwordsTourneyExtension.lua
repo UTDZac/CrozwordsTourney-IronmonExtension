@@ -5,7 +5,7 @@ local function CrozwordsTourneyExtension()
 	self.name = "Crozwords Tourney Tracker"
 	self.author = "UTDZac"
 	self.description = "This extension adds extra functionality to the Tracker for the FRLG tournament, such as counting milestone points."
-	self.version = "0.6"
+	self.version = "0.7"
 	self.url = "https://github.com/UTDZac/CrozwordsTourney-IronmonExtension"
 
 	function self.checkForUpdates()
@@ -56,33 +56,33 @@ local function CrozwordsTourneyExtension()
 		FullClear = "Full clear an area",
 	}
 	local Milestones = {
-		ForestTrainer1 = 	{ type = MilestoneTypes.SingleTrainer, 	points = 1, },
-		ForestTrainer2 = 	{ type = MilestoneTypes.SingleTrainer, 	points = 1, },
-		ForestTrainer3 = 	{ type = MilestoneTypes.SingleTrainer, 	points = 1, },
-		ForestTrainer4 = 	{ type = MilestoneTypes.SingleTrainer, 	points = 1, },
-		ForestTrainer5 = 	{ type = MilestoneTypes.SingleTrainer, 	points = 1, },
-		Rival2 = 			{ type = MilestoneTypes.SingleTrainer, 	points = 1, },
-		Brock = 			{ type = MilestoneTypes.SingleTrainer, 	points = 3, },
-		MtMoonFC = 			{ type = MilestoneTypes.FullClear, 		points = 1, zone = Zones.MtMoon, },
-		SSAnneFC = 			{ type = MilestoneTypes.FullClear, 		points = 1, zone = Zones.SSAnne, },
-		MistySurge = 		{ type = MilestoneTypes.AllTrainers, 	points = 1, },
-		RockTunnelFC = 		{ type = MilestoneTypes.FullClear, 		points = 1, zone = Zones.RockTunnel, },
-		RocketHideout = 	{ type = MilestoneTypes.EscapeZone, 	points = 1, zone = Zones.RocketHideout, },
-		PokemonTowerFC = 	{ type = MilestoneTypes.FullClear, 		points = 1, zone = Zones.PokemonTower, },
-		Erika = 			{ type = MilestoneTypes.SingleTrainer, 	points = 1, },
-		Koga = 				{ type = MilestoneTypes.SingleTrainer, 	points = 1, },
-		SilphEscape = 		{ type = MilestoneTypes.EscapeZone, 	points = 1, zone = Zones.SilphCo, },
-		SilphFC = 			{ type = MilestoneTypes.FullClear, 		points = 3, zone = Zones.SilphCo, },
-		CinnabarFC = 		{ type = MilestoneTypes.FullClear, 		points = 1, zone = Zones.CinnabarMansion, },
-		Sabrina = 			{ type = MilestoneTypes.SingleTrainer, 	points = 1, },
-		Blaine = 			{ type = MilestoneTypes.SingleTrainer, 	points = 1, },
-		GiovanniGym = 		{ type = MilestoneTypes.SingleTrainer, 	points = 2, },
-		RivalVR = 			{ type = MilestoneTypes.SingleTrainer, 	points = 1, },
-		Lorelei = 			{ type = MilestoneTypes.SingleTrainer, 	points = 1, },
-		Bruno = 			{ type = MilestoneTypes.SingleTrainer, 	points = 2, },
-		Agatha = 			{ type = MilestoneTypes.SingleTrainer, 	points = 2, },
-		Lance = 			{ type = MilestoneTypes.SingleTrainer, 	points = 3, },
-		Champion = 			{ type = MilestoneTypes.SingleTrainer, 	points = 5, },
+		ForestTrainer1 = 	{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 1, },
+		ForestTrainer2 = 	{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 2, },
+		ForestTrainer3 = 	{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 3, },
+		ForestTrainer4 = 	{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 4, },
+		ForestTrainer5 = 	{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 5, },
+		Rival2 = 			{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 6, },
+		Brock = 			{ type = MilestoneTypes.SingleTrainer, 	points = 3, ordinal = 7, },
+		MtMoonFC = 			{ type = MilestoneTypes.FullClear, 		points = 1, ordinal = 8, zone = Zones.MtMoon, },
+		SSAnneFC = 			{ type = MilestoneTypes.FullClear, 		points = 1, ordinal = 9, zone = Zones.SSAnne, },
+		MistySurge = 		{ type = MilestoneTypes.AllTrainers, 	points = 1, ordinal = 10, },
+		RockTunnelFC = 		{ type = MilestoneTypes.FullClear, 		points = 1, ordinal = 11, zone = Zones.RockTunnel, },
+		RocketHideout = 	{ type = MilestoneTypes.EscapeZone, 	points = 1, ordinal = 12, zone = Zones.RocketHideout, },
+		PokemonTowerFC = 	{ type = MilestoneTypes.FullClear, 		points = 1, ordinal = 13, zone = Zones.PokemonTower, },
+		Erika = 			{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 14, },
+		Koga = 				{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 15, },
+		SilphEscape = 		{ type = MilestoneTypes.EscapeZone, 	points = 1, ordinal = 16, zone = Zones.SilphCo, },
+		SilphFC = 			{ type = MilestoneTypes.FullClear, 		points = 3, ordinal = 17, zone = Zones.SilphCo, },
+		CinnabarFC = 		{ type = MilestoneTypes.FullClear, 		points = 1, ordinal = 18, zone = Zones.CinnabarMansion, },
+		Sabrina = 			{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 19, },
+		Blaine = 			{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 20, },
+		GiovanniGym = 		{ type = MilestoneTypes.SingleTrainer, 	points = 2, ordinal = 21, },
+		RivalVR = 			{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 22, },
+		Lorelei = 			{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 23, },
+		Bruno = 			{ type = MilestoneTypes.SingleTrainer, 	points = 2, ordinal = 24, },
+		Agatha = 			{ type = MilestoneTypes.SingleTrainer, 	points = 2, ordinal = 25, },
+		Lance = 			{ type = MilestoneTypes.SingleTrainer, 	points = 3, ordinal = 26, },
+		Champion = 			{ type = MilestoneTypes.SingleTrainer, 	points = 5, ordinal = 27, },
 	}
 	local TrainerMilestoneMap = {
 		[102] = Milestones.ForestTrainer1,
@@ -238,15 +238,19 @@ local function CrozwordsTourneyExtension()
 	local ExtSettingsData = {
 		AutoCountPoints = {
 			value = true, -- default
-			label = "Automatically count points for milestones completed",
+			label = "Auto count points as you play",
 		},
 		RequireEscapeArea = {
 			value = true, -- default
-			label = "Award points only after leaving a dungeon (non-gym)",
+			label = "Must exit dungeons for points",
+		},
+		SkipFailedAttempts = {
+			value = true, -- default
+			label = "Only count runs out of the lab",
 		},
 		TotalPoints = {
 			value = 0, -- default
-			label = "Total points across all seeds",
+			label = "Total points for all seeds:",
 			addPoints = function(this, val) if this.value then this.value = this.value + (val or 0) end end,
 		},
 		CurrentMilestones = {
@@ -284,6 +288,10 @@ local function CrozwordsTourneyExtension()
 	-- Helper Functions
 	local isSupported = function() return GameSettings.game == 3 end
 
+	local shouldShowPoints = function()
+		return Program.currentScreen == TrackerScreen and Tracker.Data.isViewingOwn and not TrackerScreen.canShowBallPicker()
+	end
+
 	local resetMilestones = function()
 		-- ExtSettingsData.TotalPoints.value = 0 -- don't reset points, these need to accumulate across multiple seeds
 		ExtSettingsData.CurrentMilestones.value = ""
@@ -303,7 +311,7 @@ local function CrozwordsTourneyExtension()
 	end
 
 	local exportMilestones = function()
-		local exportTable = {}
+		local obtainedMilestones = {}
 		local totalPoints = 0
 		local forestTrainers = 0
 		for key, milestone in pairs(Milestones) do
@@ -312,17 +320,25 @@ local function CrozwordsTourneyExtension()
 				if key:sub(1, 6) == "Forest" then
 					forestTrainers = forestTrainers + 1
 				else
-					table.insert(exportTable, key)
+					table.insert(obtainedMilestones, { key = key, ordinal = milestone.ordinal} )
 				end
 			end
 		end
+
+		-- Order the milestones based on their predefined order
+		table.sort(obtainedMilestones, function(a, b) return a.ordinal < b.ordinal end)
+		local outputTable = {}
+		for _, milestone in ipairs(obtainedMilestones) do
+			table.insert(outputTable, milestone.key)
+		end
+		-- Merge in the forest milestones as a single milestone
 		if forestTrainers > 0 then
-			table.insert(exportTable, 1, string.format("Forest(%s)", forestTrainers))
+			table.insert(outputTable, 1, string.format("Forest(%s)", forestTrainers))
 		end
 
 		local milestoneText
-		if #exportTable > 0 then
-			milestoneText = table.concat(exportTable, ", ")
+		if #outputTable > 0 then
+			milestoneText = table.concat(outputTable, ", ")
 		else
 			milestoneText = "No milestones achieved"
 		end
@@ -398,17 +414,9 @@ local function CrozwordsTourneyExtension()
 		end
 	end
 
-	local function applyOptionsCallback(autoCount, requireEscape, pointValue)
+	local function applyOptionsCallback(pointValue)
 		local settingsWereChange = false
 
-		if ExtSettingsData.AutoCountPoints.value ~= autoCount then
-			ExtSettingsData.AutoCountPoints.value = autoCount
-			settingsWereChange = true
-		end
-		if ExtSettingsData.RequireEscapeArea.value ~= requireEscape then
-			ExtSettingsData.RequireEscapeArea.value = requireEscape
-			settingsWereChange = true
-		end
 		if ExtSettingsData.TotalPoints.value ~= pointValue then
 			ExtSettingsData.TotalPoints.value = pointValue
 			settingsWereChange = true
@@ -420,64 +428,155 @@ local function CrozwordsTourneyExtension()
 		end
 	end
 
-	local function openOptionsPopup()
+	local function openEditPointsPopup()
 		if not Main.IsOnBizhawk() then return end
 
-		local popupWidth, popupHeight = 500, 255
-		local fontFamily, fontSize, fontColor, fontStyle = "Arial", 14, 0xFF000000, "bold"
-
 		Program.destroyActiveForm()
-		local formName = string.format("%s Settings", self.name)
-		local form = forms.newform(popupWidth, popupHeight, formName, function() client.unpause() end)
+		local form = forms.newform(320, 130, "Edit Total Points", function() client.unpause() end)
 		Program.activeFormId = form
 		Utils.setFormLocation(form, 100, 50)
 
-		local rightCol = popupWidth - 50
-		local yOffset = 10
-		local canvas = { x = 0, y = 10, width = rightCol - 40, height = 100, }
-		canvas.area = forms.pictureBox(form, canvas.x, canvas.y, canvas.width, canvas.height)
+		forms.label(form, ExtSettingsData.TotalPoints.label, 54, 20, 140, 20)
 
-		local optionAutoCount = forms.checkbox(form, "", rightCol, yOffset)
-		forms.setproperty(optionAutoCount, "Checked", Utils.inlineIf(ExtSettingsData.AutoCountPoints.value, "True", "False"))
-		forms.drawText(canvas.area, canvas.x + 34, yOffset-6, ExtSettingsData.AutoCountPoints.label, fontColor, 0x00000000, fontSize, fontFamily, fontStyle, "left")
-		yOffset = yOffset + 25
+		local textboxPoints = forms.textbox(form, ExtSettingsData.TotalPoints.value or 0, 45, 20, "UNSIGNED", 200, 18)
 
-		local optionRequireEscape = forms.checkbox(form, "", rightCol, yOffset)
-		forms.setproperty(optionRequireEscape, "Checked", Utils.inlineIf(ExtSettingsData.RequireEscapeArea.value, "True", "False"))
-		forms.drawText(canvas.area, canvas.x + 34, yOffset-6, ExtSettingsData.RequireEscapeArea.label, fontColor, 0x00000000, fontSize, fontFamily, fontStyle, "left")
-		yOffset = yOffset + 25
+		local saveButton = forms.button(form, "Save", function()
+			local pointsAsNumber = tonumber(forms.gettext(textboxPoints) or "") or ExtSettingsData.TotalPoints.value
+			applyOptionsCallback(pointsAsNumber)
+			client.unpause()
+			forms.destroy(form)
+		end, 75, 50)
+		local cancelButton = forms.button(form, "Cancel", function()
+			client.unpause()
+			forms.destroy(form)
+		end, 165, 50)
+	end
 
-		local textboxPoints = forms.textbox(form, ExtSettingsData.TotalPoints.value or 0, 39, 20, "UNSIGNED", rightCol-25, yOffset+2)
-		forms.drawText(canvas.area, canvas.x + 34, yOffset-6, ExtSettingsData.TotalPoints.label, fontColor, 0x00000000, fontSize, fontFamily, fontStyle, "left")
-		yOffset = yOffset + 51
+	local function openSharePointsPopup()
+		if not Main.IsOnBizhawk() then return end
 
-		local textboxShareMilestones = forms.textbox(form, exportMilestones(), 430, 60, nil, 35, yOffset, true, false, "Vertical")
-		forms.drawText(canvas.area, canvas.x + 34, yOffset-28, "Points & milestones for current seed:", fontColor, 0x00000000, fontSize, fontFamily, fontStyle, "left")
-		yOffset = yOffset + 50
+		local popupWidth, popupHeight = 500, 185
 
-		yOffset = yOffset + 20
+		Program.destroyActiveForm()
+		local form = forms.newform(popupWidth, popupHeight, "Current Points/Milestones", function() client.unpause() end)
+		Program.activeFormId = form
+		Utils.setFormLocation(form, 100, 50)
+
+		local boxLabel = "Points and milestones for the current seed (excludes evo bonuses):"
+		forms.label(form, boxLabel, 33, 20, 400, 20)
+
+		local textboxShareMilestones = forms.textbox(form, exportMilestones(), 430, 60, nil, 35, 41, true, false, "Vertical")
+
 		local resetButton = forms.button(form, "Clear Seed/Points", function()
 			ExtSettingsData.TotalPoints.value = 0
 			resetMilestones()
 			saveSettingsData()
-			forms.settext(textboxPoints, ExtSettingsData.TotalPoints.value)
 			forms.settext(textboxShareMilestones, exportMilestones())
-		end, rightCol-95, yOffset, 110, 23)
-		local saveButton = forms.button(form, "Save", function()
-			local pointsAsNumber = tonumber(forms.gettext(textboxPoints) or "") or ExtSettingsData.TotalPoints.value
-			applyOptionsCallback(forms.ischecked(optionAutoCount), forms.ischecked(optionRequireEscape), pointsAsNumber)
-
+		end, 34, 110, 135, 23)
+		local cancelButton = forms.button(form, "Close", function()
 			client.unpause()
 			forms.destroy(form)
-		end, 140, yOffset)
-		local cancelButton = forms.button(form, "Cancel", function()
-			client.unpause()
-			forms.destroy(form)
-		end, 220, yOffset)
+		end, 390, 110)
 	end
 
-	local shouldShowPoints = function()
-		return Program.currentScreen == TrackerScreen and Tracker.Data.isViewingOwn and not TrackerScreen.canShowBallPicker()
+	local CrozTourneyScreen = {
+		Colors = {
+			text = "Default text",
+			border = "Upper box border",
+			boxFill = "Upper box background",
+		},
+	}
+	CrozTourneyScreen.Buttons = {
+		ShareScore = {
+			type = Constants.ButtonTypes.FULL_BORDER,
+			text = "Share Score",
+			textColor = CrozTourneyScreen.Colors.text,
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 4, Constants.SCREEN.MARGIN + 135, 52, 11 },
+			boxColors = { CrozTourneyScreen.Colors.border, CrozTourneyScreen.Colors.boxFill },
+			onClick = function() openSharePointsPopup() end
+		},
+		TotalScore = {
+			type = Constants.ButtonTypes.NO_BORDER,
+			text = "",
+			textColor = CrozTourneyScreen.Colors.text,
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 105, Constants.SCREEN.MARGIN + 14, 24, 11 },
+			boxColors = { CrozTourneyScreen.Colors.border, CrozTourneyScreen.Colors.boxFill },
+			updateSelf = function(this)
+				this.text = tostring(ExtSettingsData.TotalPoints.value or 0)
+			end,
+			draw = function(this, shadowcolor)
+				Drawing.drawText(Constants.SCREEN.WIDTH + 8, this.box[2], ExtSettingsData.TotalPoints.label, Theme.COLORS[this.textColor], shadowcolor)
+			end,
+			onClick = function() openEditPointsPopup() end
+		},
+		Back = {
+			type = Constants.ButtonTypes.FULL_BORDER,
+			text = "Back",
+			textColor = CrozTourneyScreen.Colors.text,
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 112, Constants.SCREEN.MARGIN + 135, 24, 11 },
+			boxColors = { CrozTourneyScreen.Colors.border, CrozTourneyScreen.Colors.boxFill },
+			onClick = function() Program.changeScreenView(SingleExtensionScreen) end
+		},
+	}
+	-- Add screen buttons
+	local buttonOffsetY = Constants.SCREEN.MARGIN + 32
+	for _, settingsOption in ipairs({ExtSettingsData.AutoCountPoints, ExtSettingsData.RequireEscapeArea, ExtSettingsData.SkipFailedAttempts}) do
+		local screenButton = {
+			type = Constants.ButtonTypes.CHECKBOX,
+			text = settingsOption.label,
+			getText = function(this) return settingsOption.label end, -- for 8.0.0+
+			textColor = CrozTourneyScreen.Colors.text,
+			boxColors = { CrozTourneyScreen.Colors.border, CrozTourneyScreen.Colors.boxFill },
+			clickableArea = { Constants.SCREEN.WIDTH + 9, buttonOffsetY, Constants.SCREEN.RIGHT_GAP - 12, 8 },
+			box = {	Constants.SCREEN.WIDTH + 9, buttonOffsetY, 8, 8 },
+			toggleState = true,
+			toggleColor = "Positive text",
+			updateSelf = function(this)
+				this.toggleState = settingsOption.value
+			end,
+			onClick = function(this)
+				this.toggleState = not this.toggleState
+				settingsOption.value = not settingsOption.value
+				settingsOption:save()
+				Program.redraw(true)
+			end
+		}
+		table.insert(CrozTourneyScreen.Buttons, screenButton)
+		buttonOffsetY = buttonOffsetY + 12
+	end
+	CrozTourneyScreen.refreshScreenButtons = function()
+		for _, button in pairs(CrozTourneyScreen.Buttons) do
+			if type(button.updateSelf) == "function" then
+				button:updateSelf()
+			end
+		end
+	end
+
+	CrozTourneyScreen.checkInput = function(xmouse, ymouse)
+		Input.checkButtonsClicked(xmouse, ymouse, CrozTourneyScreen.Buttons)
+	end
+	CrozTourneyScreen.drawScreen = function()
+		Drawing.drawBackgroundAndMargins()
+		gui.defaultTextBackground(Theme.COLORS[CrozTourneyScreen.Colors.boxFill])
+		local topBox = {
+			x = Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN,
+			y = Constants.SCREEN.MARGIN + 10,
+			width = Constants.SCREEN.RIGHT_GAP - (Constants.SCREEN.MARGIN * 2),
+			height = Constants.SCREEN.HEIGHT - (Constants.SCREEN.MARGIN * 2) - 10,
+			text = Theme.COLORS[CrozTourneyScreen.Colors.text],
+			border = Theme.COLORS[CrozTourneyScreen.Colors.border],
+			fill = Theme.COLORS[CrozTourneyScreen.Colors.boxFill],
+			shadow = Utils.calcShadowColor(Theme.COLORS[CrozTourneyScreen.Colors.boxFill]),
+		}
+
+		local headerShadow = Utils.calcShadowColor(Theme.COLORS["Main background"])
+		Drawing.drawText(topBox.x, Constants.SCREEN.MARGIN - 2, ("Tourney Extension Settings"):upper(), Theme.COLORS["Header text"], headerShadow)
+
+		gui.drawRectangle(topBox.x, topBox.y, topBox.width, topBox.height, topBox.border, topBox.fill)
+
+		for _, button in pairs(CrozTourneyScreen.Buttons) do
+			Drawing.drawButton(button, topBox.shadow)
+		end
 	end
 
 	local createButtons = function ()
@@ -496,7 +595,7 @@ local function CrozwordsTourneyExtension()
 				local pointNumberColor = Utils.inlineIf(highlightFrames > 0, "Intermediate text", "Default text")
 				Drawing.drawText(this.box[1], this.box[2], pointNumber, Theme.COLORS[pointNumberColor], shadowcolor)
 			end,
-			onClick = function() openOptionsPopup() end,
+			onClick = function() openEditPointsPopup() end,
 		}
 		TrackerScreen.Buttons.PointIncrementBtn = {
 			type = Constants.ButtonTypes.NO_BORDER,
@@ -553,7 +652,7 @@ local function CrozwordsTourneyExtension()
 				-- Drawing.drawImageAsPixels(Constants.PixelImages.MAGNIFYING_GLASS, this.box[1] + offsetX, this.box[2] + 1, Theme.COLORS["Intermediate text"], shadowcolor)
 				Drawing.drawText(this.box[1] + offsetX, this.box[2], shareText, Theme.COLORS["Intermediate text"], shadowcolor)
 			end,
-			onClick = function() openOptionsPopup() end,
+			onClick = function() openSharePointsPopup() end,
 		}
 		-- TODO: Add the GameOverScreen button
 	end
@@ -566,7 +665,8 @@ local function CrozwordsTourneyExtension()
 
 	-- EXTENSION FUNCTIONS
 	function self.configureOptions()
-		openOptionsPopup()
+		CrozTourneyScreen.refreshScreenButtons()
+		Program.changeScreenView(CrozTourneyScreen)
 	end
 
 	local originalSurvivalSetting
@@ -577,15 +677,14 @@ local function CrozwordsTourneyExtension()
 
 		createButtons()
 		resetMilestones()
+		loadSettingsData()
 
-		-- If a previous game is loaded and being continued, keep milestones; otherwise, just keep points and reset milestones
-		if Tracker.DataMessage:find(Tracker.LoadStatusMessages.fromFile) ~= nil then
-			loadSettingsData()
-		else
-			ExtSettingsData.TotalPoints:load()
-			ExtSettingsData.CurrentMilestones.value = ""
-			ExtSettingsData.CurrentMilestones:save()
+		-- If the current game is a new game, clear out the milestones
+		if Tracker.DataMessage:find(Tracker.LoadStatusMessages.fromFile) == nil then
+			resetMilestones()
 		end
+
+		CrozTourneyScreen.refreshScreenButtons()
 	end
 
 	function self.unload()
@@ -641,6 +740,18 @@ local function CrozwordsTourneyExtension()
 		if milestone.trainers then
 			milestone.trainers[trainerId] = true
 			checkMilestoneForPoints(milestone)
+		end
+	end
+
+	-- [Bizhawk only] Executed each frame (60 frames per second)
+	-- CAUTION: Avoid unnecessary calculations here, as this can easily affect performance.
+	function self.inputCheckBizhawk()
+		if Main.loadNextSeed and ExtSettingsData.SkipFailedAttempts.value then
+			-- Skip this attempt if the rival was not beaten
+			local trainersDefeated = Utils.getGameStat(Constants.GAME_STATS.TRAINER_BATTLES) or 0
+			if trainersDefeated == 0 then
+				Main.currentSeed = Main.currentSeed - 1
+			end
 		end
 	end
 
