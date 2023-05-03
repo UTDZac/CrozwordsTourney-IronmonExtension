@@ -5,7 +5,7 @@ local function CrozwordsTourneyExtension()
 	self.name = "Crozwords Tourney Tracker"
 	self.author = "UTDZac"
 	self.description = "This extension adds extra functionality to the Tracker for the FRLG tournament, such as counting milestone points."
-	self.version = "0.7"
+	self.version = "0.8"
 	self.url = "https://github.com/UTDZac/CrozwordsTourney-IronmonExtension"
 
 	function self.checkForUpdates()
@@ -241,11 +241,11 @@ local function CrozwordsTourneyExtension()
 			label = "Auto count points as you play",
 		},
 		RequireEscapeArea = {
-			value = true, -- default
+			value = false, -- default
 			label = "Must exit dungeons for points",
 		},
 		SkipFailedAttempts = {
-			value = true, -- default
+			value = false, -- default
 			label = "Only count runs out of the lab",
 		},
 		TotalPoints = {
@@ -284,6 +284,21 @@ local function CrozwordsTourneyExtension()
 			end
 		end
 	end
+
+	local CrozTourneyScreen = {
+		Colors = {
+			text = "Default text",
+			border = "Upper box border",
+			boxFill = "Upper box background",
+		},
+	}
+	local ViewCurrentScoreScreen = {
+		Colors = {
+			text = "Default text",
+			border = "Upper box border",
+			boxFill = "Upper box background",
+		},
+	}
 
 	-- Helper Functions
 	local isSupported = function() return GameSettings.game == 3 end
@@ -346,6 +361,15 @@ local function CrozwordsTourneyExtension()
 		local includeAnS = Utils.inlineIf(totalPoints ~= 1, "s", "")
 		return string.format("%s Point%s: %s", totalPoints, includeAnS, milestoneText)
 	end
+	local getCurrentSeedPointTotal = function()
+		local totalPoints = 0
+		for _, milestone in pairs(Milestones) do
+			if milestone.obtained then
+				totalPoints = totalPoints + (milestone.points or 0)
+			end
+		end
+		return totalPoints
+	end
 
 	-- If conditions are met to receive milestone, mark it as obtained and add points
 	local checkMilestoneForPoints = function(milestone)
@@ -378,6 +402,8 @@ local function CrozwordsTourneyExtension()
 		-- If newly obtained milestone, add points
 		if milestone.obtained then
 			ExtSettingsData.TotalPoints:addPoints(milestone.points)
+			CrozTourneyScreen.refreshButtons()
+			ViewCurrentScoreScreen.refreshButtons()
 			highlightFrames = 270
 			saveLaterFrames = 150
 		end
@@ -414,7 +440,7 @@ local function CrozwordsTourneyExtension()
 		end
 	end
 
-	local function applyOptionsCallback(pointValue)
+	local function applyOptionsCallback(pointValue, callback)
 		local settingsWereChange = false
 
 		if ExtSettingsData.TotalPoints.value ~= pointValue then
@@ -424,11 +450,14 @@ local function CrozwordsTourneyExtension()
 
 		if settingsWereChange then
 			saveSettingsData()
+			if type(callback) == "function" then
+				callback()
+			end
 			Program.redraw(true)
 		end
 	end
 
-	local function openEditPointsPopup()
+	local function openEditPointsPopup(callback)
 		if not Main.IsOnBizhawk() then return end
 
 		Program.destroyActiveForm()
@@ -442,7 +471,7 @@ local function CrozwordsTourneyExtension()
 
 		local saveButton = forms.button(form, "Save", function()
 			local pointsAsNumber = tonumber(forms.gettext(textboxPoints) or "") or ExtSettingsData.TotalPoints.value
-			applyOptionsCallback(pointsAsNumber)
+			applyOptionsCallback(pointsAsNumber, callback)
 			client.unpause()
 			forms.destroy(form)
 		end, 75, 50)
@@ -452,7 +481,7 @@ local function CrozwordsTourneyExtension()
 		end, 165, 50)
 	end
 
-	local function openSharePointsPopup()
+	local function openSharePointsPopup(callback)
 		if not Main.IsOnBizhawk() then return end
 
 		local popupWidth, popupHeight = 500, 185
@@ -472,6 +501,9 @@ local function CrozwordsTourneyExtension()
 			resetMilestones()
 			saveSettingsData()
 			forms.settext(textboxShareMilestones, exportMilestones())
+			if type(callback) == "function" then
+				callback()
+			end
 		end, 34, 110, 135, 23)
 		local cancelButton = forms.button(form, "Close", function()
 			client.unpause()
@@ -479,35 +511,50 @@ local function CrozwordsTourneyExtension()
 		end, 390, 110)
 	end
 
-	local CrozTourneyScreen = {
-		Colors = {
-			text = "Default text",
-			border = "Upper box border",
-			boxFill = "Upper box background",
-		},
-	}
+	CrozTourneyScreen.refreshButtons = function()
+		for _, button in pairs(CrozTourneyScreen.Buttons) do
+			if type(button.updateSelf) == "function" then
+				button:updateSelf()
+			end
+		end
+	end
 	CrozTourneyScreen.Buttons = {
+		TotalScore = {
+			type = Constants.ButtonTypes.NO_BORDER,
+			text = "",
+			textColor = "Intermediate text",
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 101, Constants.SCREEN.MARGIN + 14, 35, 11 },
+			boxColors = { CrozTourneyScreen.Colors.border, CrozTourneyScreen.Colors.boxFill },
+			updateSelf = function(this)
+				this.text = tostring(ExtSettingsData.TotalPoints.value or 0)
+			end,
+			draw = function(this, shadowcolor)
+				Drawing.drawText(Constants.SCREEN.WIDTH + 8, this.box[2], ExtSettingsData.TotalPoints.label, Theme.COLORS[CrozTourneyScreen.Colors.text], shadowcolor)
+				local iconOffsetX = this.box[1] + 25 -- Utils.calcWordPixelLength(this.text) + 5
+				Drawing.drawImageAsPixels(Constants.PixelImages.NOTEPAD, iconOffsetX, this.box[2], Theme.COLORS[CrozTourneyScreen.Colors.text], shadowcolor)
+			end,
+			onClick = function() openEditPointsPopup(CrozTourneyScreen.refreshButtons) end
+		},
+		ViewCurrentScore = {
+			type = Constants.ButtonTypes.ICON_BORDER,
+			image = Constants.PixelImages.MAGNIFYING_GLASS,
+			text = "Points for Current Seed",
+			textColor = CrozTourneyScreen.Colors.text,
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 10, Constants.SCREEN.MARGIN + 88, 120, 16 },
+			boxColors = { CrozTourneyScreen.Colors.border, CrozTourneyScreen.Colors.boxFill },
+			onClick = function()
+				ViewCurrentScoreScreen.buildOutPagedButtons()
+				ViewCurrentScoreScreen.refreshButtons()
+				Program.changeScreenView(ViewCurrentScoreScreen)
+			end
+		},
 		ShareScore = {
 			type = Constants.ButtonTypes.FULL_BORDER,
 			text = "Share Score",
 			textColor = CrozTourneyScreen.Colors.text,
 			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 4, Constants.SCREEN.MARGIN + 135, 52, 11 },
 			boxColors = { CrozTourneyScreen.Colors.border, CrozTourneyScreen.Colors.boxFill },
-			onClick = function() openSharePointsPopup() end
-		},
-		TotalScore = {
-			type = Constants.ButtonTypes.NO_BORDER,
-			text = "",
-			textColor = CrozTourneyScreen.Colors.text,
-			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 105, Constants.SCREEN.MARGIN + 14, 24, 11 },
-			boxColors = { CrozTourneyScreen.Colors.border, CrozTourneyScreen.Colors.boxFill },
-			updateSelf = function(this)
-				this.text = tostring(ExtSettingsData.TotalPoints.value or 0)
-			end,
-			draw = function(this, shadowcolor)
-				Drawing.drawText(Constants.SCREEN.WIDTH + 8, this.box[2], ExtSettingsData.TotalPoints.label, Theme.COLORS[this.textColor], shadowcolor)
-			end,
-			onClick = function() openEditPointsPopup() end
+			onClick = function() openSharePointsPopup(CrozTourneyScreen.refreshButtons) end
 		},
 		Back = {
 			type = Constants.ButtonTypes.FULL_BORDER,
@@ -544,13 +591,6 @@ local function CrozwordsTourneyExtension()
 		table.insert(CrozTourneyScreen.Buttons, screenButton)
 		buttonOffsetY = buttonOffsetY + 12
 	end
-	CrozTourneyScreen.refreshScreenButtons = function()
-		for _, button in pairs(CrozTourneyScreen.Buttons) do
-			if type(button.updateSelf) == "function" then
-				button:updateSelf()
-			end
-		end
-	end
 
 	CrozTourneyScreen.checkInput = function(xmouse, ymouse)
 		Input.checkButtonsClicked(xmouse, ymouse, CrozTourneyScreen.Buttons)
@@ -579,7 +619,191 @@ local function CrozwordsTourneyExtension()
 		end
 	end
 
-	local createButtons = function ()
+	ViewCurrentScoreScreen.refreshButtons = function()
+		for _, button in pairs(ViewCurrentScoreScreen.Buttons) do
+			if type(button.updateSelf) == "function" then
+				button:updateSelf()
+			end
+		end
+	end
+	ViewCurrentScoreScreen.Pager = {
+		Buttons = {},
+		currentPage = 0,
+		totalPages = 0,
+		realignButtonsToGrid = function(this, x, y, colSpacer, rowSpacer)
+			table.sort(this.Buttons, this.defaultSort)
+			local cutoffX = Constants.SCREEN.WIDTH + Constants.SCREEN.RIGHT_GAP - Constants.SCREEN.MARGIN
+			local cutoffY = Constants.SCREEN.HEIGHT - 20
+			local totalPages = Utils.gridAlign(this.Buttons, x, y, colSpacer, rowSpacer, true, cutoffX, cutoffY)
+			this.currentPage = 1
+			this.totalPages = totalPages or 1
+			ViewCurrentScoreScreen.Buttons.CurrentPage:updateSelf()
+		end,
+		defaultSort = function(a, b) return a.ordinal < b.ordinal end,
+		getPageText = function(this)
+			if this.totalPages <= 1 then return "Page" end
+			return string.format("Page %s/%s", this.currentPage, this.totalPages)
+		end,
+		prevPage = function(this)
+			if this.totalPages <= 1 then return end
+			this.currentPage = ((this.currentPage - 2 + this.totalPages) % this.totalPages) + 1
+		end,
+		nextPage = function(this)
+			if this.totalPages <= 1 then return end
+			this.currentPage = (this.currentPage % this.totalPages) + 1
+		end,
+	}
+	ViewCurrentScoreScreen.Buttons = {
+		TotalScore = {
+			text = "", -- Set later via updateSelf()
+			isVisible = function() return false end,
+			updateSelf = function(this)
+				this.text = getCurrentSeedPointTotal()
+			end,
+		},
+		ShareScore = {
+			type = Constants.ButtonTypes.FULL_BORDER,
+			text = "Share",
+			textColor = ViewCurrentScoreScreen.Colors.text,
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 4, Constants.SCREEN.MARGIN + 135, 28, 11 },
+			boxColors = { ViewCurrentScoreScreen.Colors.border, ViewCurrentScoreScreen.Colors.boxFill },
+			onClick = function() openSharePointsPopup(ViewCurrentScoreScreen.refreshButtons) end
+		},
+		CurrentPage = {
+			type = Constants.ButtonTypes.NO_BORDER,
+			text = "", -- Set later via updateSelf()
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 53, Constants.SCREEN.MARGIN + 135, 50, 10, },
+			isVisible = function() return ViewCurrentScoreScreen.Pager.totalPages > 1 end,
+			updateSelf = function(this)
+				this.text = ViewCurrentScoreScreen.Pager:getPageText()
+			end,
+		},
+		PrevPage = {
+			type = Constants.ButtonTypes.PIXELIMAGE,
+			image = Constants.PixelImages.LEFT_ARROW,
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 39, Constants.SCREEN.MARGIN + 136, 10, 10, },
+			isVisible = function() return ViewCurrentScoreScreen.Pager.totalPages > 1 end,
+			onClick = function(this)
+				ViewCurrentScoreScreen.Pager:prevPage()
+				ViewCurrentScoreScreen.Buttons.CurrentPage:updateSelf()
+				Program.redraw(true)
+			end
+		},
+		NextPage = {
+			type = Constants.ButtonTypes.PIXELIMAGE,
+			image = Constants.PixelImages.RIGHT_ARROW,
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 98, Constants.SCREEN.MARGIN + 136, 10, 10, },
+			isVisible = function() return ViewCurrentScoreScreen.Pager.totalPages > 1 end,
+			onClick = function(this)
+				ViewCurrentScoreScreen.Pager:nextPage()
+				ViewCurrentScoreScreen.Buttons.CurrentPage:updateSelf()
+				Program.redraw(true)
+			end
+		},
+		Back = {
+			type = Constants.ButtonTypes.FULL_BORDER,
+			text = "Back",
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 112, Constants.SCREEN.MARGIN + 135, 24, 11 },
+			onClick = function(this) Program.changeScreenView(CrozTourneyScreen) end
+		},
+	}
+	for _, button in pairs(ViewCurrentScoreScreen.Buttons) do
+		if button.textColor == nil then
+			button.textColor = ViewCurrentScoreScreen.Colors.text
+		end
+		if button.boxColors == nil then
+			button.boxColors = { ViewCurrentScoreScreen.Colors.border, ViewCurrentScoreScreen.Colors.boxFill }
+		end
+	end
+	local pointsColumnOffsetX = Constants.SCREEN.WIDTH + 80
+	local claimedColumnOffsetX = Constants.SCREEN.WIDTH + 108
+	ViewCurrentScoreScreen.buildOutPagedButtons = function()
+		ViewCurrentScoreScreen.Pager.Buttons = {}
+
+		for key, milestone in pairs(Milestones) do
+			local button = {
+				type = Constants.ButtonTypes.NO_BORDER,
+				text = key,
+				textColor = ViewCurrentScoreScreen.Colors.text,
+				boxColors = { ViewCurrentScoreScreen.Colors.border, ViewCurrentScoreScreen.Colors.boxFill, },
+				key = key,
+				milestone = milestone,
+				ordinal = milestone.ordinal,
+				dimensions = { width = 124, height = 11, },
+				isVisible = function(this) return ViewCurrentScoreScreen.Pager.currentPage == this.pageVisible end,
+				updateSelf = function(this)
+				end,
+				draw = function(this, shadowcolor)
+					local pointsText = this.milestone.points or Constants.BLANKLINE
+					Drawing.drawText(pointsColumnOffsetX + 9, this.box[2], pointsText, Theme.COLORS[ViewCurrentScoreScreen.Colors.text], shadowcolor)
+					if this.milestone.obtained then
+						Drawing.drawText(claimedColumnOffsetX + 12, this.box[2], pointsText, Theme.COLORS["Positive text"], shadowcolor)
+					else
+						Drawing.drawText(claimedColumnOffsetX + 12, this.box[2], Constants.BLANKLINE, Theme.COLORS[this.textColor], shadowcolor)
+					end
+				end,
+				onClick = function(this)
+					this:updateSelf()
+					Program.redraw(true)
+				end,
+			}
+			table.insert(ViewCurrentScoreScreen.Pager.Buttons, button)
+		end
+
+		local x = Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 2
+		local y = Constants.SCREEN.MARGIN + 25
+		local colSpacer = 1
+		local rowSpacer = 1
+		ViewCurrentScoreScreen.Pager:realignButtonsToGrid(x, y, colSpacer, rowSpacer)
+
+		return true
+	end
+	ViewCurrentScoreScreen.checkInput = function(xmouse, ymouse)
+		Input.checkButtonsClicked(xmouse, ymouse, ViewCurrentScoreScreen.Buttons)
+		Input.checkButtonsClicked(xmouse, ymouse, ViewCurrentScoreScreen.Pager.Buttons)
+	end
+	ViewCurrentScoreScreen.drawScreen = function()
+		Drawing.drawBackgroundAndMargins()
+		gui.defaultTextBackground(Theme.COLORS[ViewCurrentScoreScreen.Colors.boxFill])
+		local topBox = {
+			x = Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN,
+			y = Constants.SCREEN.MARGIN + 10,
+			width = Constants.SCREEN.RIGHT_GAP - (Constants.SCREEN.MARGIN * 2),
+			height = Constants.SCREEN.HEIGHT - (Constants.SCREEN.MARGIN * 2) - 10,
+			text = Theme.COLORS[ViewCurrentScoreScreen.Colors.text],
+			border = Theme.COLORS[ViewCurrentScoreScreen.Colors.border],
+			fill = Theme.COLORS[ViewCurrentScoreScreen.Colors.boxFill],
+			shadow = Utils.calcShadowColor(Theme.COLORS[ViewCurrentScoreScreen.Colors.boxFill]),
+		}
+
+		local headerShadow = Utils.calcShadowColor(Theme.COLORS["Main background"])
+		Drawing.drawText(topBox.x, Constants.SCREEN.MARGIN - 2, "Current Seed Score:", Theme.COLORS["Header text"], headerShadow)
+		local headerPoints = ViewCurrentScoreScreen.Buttons.TotalScore.text or Constants.BLANKLINE
+		Drawing.drawText(claimedColumnOffsetX + 12, Constants.SCREEN.MARGIN - 2, headerPoints, Theme.COLORS[Theme.headerHighlightKey], headerShadow)
+
+		gui.drawRectangle(topBox.x, topBox.y, topBox.width, topBox.height, topBox.border, topBox.fill)
+
+		-- Draw header labels
+		local offsetY = topBox.y + 2
+		Drawing.drawText(topBox.x + 3, offsetY, "Milestone", Theme.COLORS["Intermediate text"], topBox.shadow)
+		Drawing.drawText(pointsColumnOffsetX, offsetY, "Points", Theme.COLORS["Intermediate text"], topBox.shadow)
+		Drawing.drawText(claimedColumnOffsetX, offsetY, "Claimed", Theme.COLORS["Intermediate text"], topBox.shadow)
+
+		-- Draw header underlines
+		offsetY = offsetY + 10
+		gui.drawLine(topBox.x + 4, offsetY, topBox.x + 42, offsetY, Theme.COLORS[topBox.text])
+		gui.drawLine(pointsColumnOffsetX + 1, offsetY, pointsColumnOffsetX + 25, offsetY, Theme.COLORS[topBox.text])
+		gui.drawLine(claimedColumnOffsetX + 1, offsetY, claimedColumnOffsetX + 33, offsetY, Theme.COLORS[topBox.text])
+
+		for _, button in pairs(ViewCurrentScoreScreen.Buttons) do
+			Drawing.drawButton(button, topBox.shadow)
+		end
+		for _, button in pairs(ViewCurrentScoreScreen.Pager.Buttons) do
+			Drawing.drawButton(button, topBox.shadow)
+		end
+	end
+
+	local createButtonInserts = function ()
 		TrackerScreen.Buttons.PointTotalBtn = {
 			type = Constants.ButtonTypes.NO_BORDER,
 			-- text = "",
@@ -654,9 +878,8 @@ local function CrozwordsTourneyExtension()
 			end,
 			onClick = function() openSharePointsPopup() end,
 		}
-		-- TODO: Add the GameOverScreen button
 	end
-	local removeButtons = function()
+	local removeButtonInserts = function()
 		TrackerScreen.Buttons.PointTotalBtn = nil
 		TrackerScreen.Buttons.PointIncrementBtn = nil
 		TrackerScreen.Buttons.PointDecrementBtn = nil
@@ -665,7 +888,7 @@ local function CrozwordsTourneyExtension()
 
 	-- EXTENSION FUNCTIONS
 	function self.configureOptions()
-		CrozTourneyScreen.refreshScreenButtons()
+		CrozTourneyScreen.refreshButtons()
 		Program.changeScreenView(CrozTourneyScreen)
 	end
 
@@ -675,7 +898,12 @@ local function CrozwordsTourneyExtension()
 		originalSurvivalSetting = Options["Track PC Heals"]
 		Options["Track PC Heals"] = false
 
-		createButtons()
+		-- Temp fix until it gets fixed in main Tracker code
+		-- if Constants.CharWidths["1"] == 3 then
+		-- 	Constants.CharWidths["1"] = 4
+		-- end
+
+		createButtonInserts()
 		resetMilestones()
 		loadSettingsData()
 
@@ -684,7 +912,8 @@ local function CrozwordsTourneyExtension()
 			resetMilestones()
 		end
 
-		CrozTourneyScreen.refreshScreenButtons()
+		CrozTourneyScreen.refreshButtons()
+		ViewCurrentScoreScreen.refreshButtons()
 	end
 
 	function self.unload()
@@ -693,7 +922,7 @@ local function CrozwordsTourneyExtension()
 			Options["Track PC Heals"] = (originalSurvivalSetting == true)
 		end
 
-		removeButtons()
+		removeButtonInserts()
 		saveSettingsData()
 	end
 
@@ -706,15 +935,15 @@ local function CrozwordsTourneyExtension()
 
 		if ExtSettingsData.AutoCountPoints.value then
 			checkAllMilestones()
-		end
 
-		if highlightFrames > 0 then
-			highlightFrames = highlightFrames - 30
-		end
-		if saveLaterFrames > 0 then
-			saveLaterFrames = saveLaterFrames - 30
-			if saveLaterFrames <= 0 then
-				saveSettingsData()
+			if highlightFrames > 0 then
+				highlightFrames = highlightFrames - 30
+			end
+			if saveLaterFrames > 0 then
+				saveLaterFrames = saveLaterFrames - 30
+				if saveLaterFrames <= 0 then
+					saveSettingsData()
+				end
 			end
 		end
 	end
