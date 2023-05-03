@@ -5,7 +5,7 @@ local function CrozwordsTourneyExtension()
 	self.name = "Crozwords Tourney Tracker"
 	self.author = "UTDZac"
 	self.description = "This extension adds extra functionality to the Tracker for the FRLG tournament, such as counting milestone points."
-	self.version = "0.5"
+	self.version = "0.6"
 	self.url = "https://github.com/UTDZac/CrozwordsTourney-IronmonExtension"
 
 	function self.checkForUpdates()
@@ -327,7 +327,8 @@ local function CrozwordsTourneyExtension()
 			milestoneText = "No milestones achieved"
 		end
 
-		return string.format("%s Points: %s", totalPoints, milestoneText)
+		local includeAnS = Utils.inlineIf(totalPoints ~= 1, "s", "")
+		return string.format("%s Point%s: %s", totalPoints, includeAnS, milestoneText)
 	end
 
 	-- If conditions are met to receive milestone, mark it as obtained and add points
@@ -422,7 +423,7 @@ local function CrozwordsTourneyExtension()
 	local function openOptionsPopup()
 		if not Main.IsOnBizhawk() then return end
 
-		local popupWidth, popupHeight = 500, 250
+		local popupWidth, popupHeight = 500, 255
 		local fontFamily, fontSize, fontColor, fontStyle = "Arial", 14, 0xFF000000, "bold"
 
 		Program.destroyActiveForm()
@@ -458,6 +459,7 @@ local function CrozwordsTourneyExtension()
 		local resetButton = forms.button(form, "Clear Seed/Points", function()
 			ExtSettingsData.TotalPoints.value = 0
 			resetMilestones()
+			saveSettingsData()
 			forms.settext(textboxPoints, ExtSettingsData.TotalPoints.value)
 			forms.settext(textboxShareMilestones, exportMilestones())
 		end, rightCol-95, yOffset, 110, 23)
@@ -494,7 +496,7 @@ local function CrozwordsTourneyExtension()
 				local pointNumberColor = Utils.inlineIf(highlightFrames > 0, "Intermediate text", "Default text")
 				Drawing.drawText(this.box[1], this.box[2], pointNumber, Theme.COLORS[pointNumberColor], shadowcolor)
 			end,
-			onClick = function() openOptionsPopup() end
+			onClick = function() openOptionsPopup() end,
 		}
 		TrackerScreen.Buttons.PointIncrementBtn = {
 			type = Constants.ButtonTypes.NO_BORDER,
@@ -514,7 +516,7 @@ local function CrozwordsTourneyExtension()
 				ExtSettingsData.TotalPoints:addPoints(1)
 				saveLaterFrames = 150
 				Program.redraw(true)
-			end
+			end,
 		}
 		TrackerScreen.Buttons.PointDecrementBtn = {
 			type = Constants.ButtonTypes.NO_BORDER,
@@ -534,13 +536,32 @@ local function CrozwordsTourneyExtension()
 				ExtSettingsData.TotalPoints:addPoints(-1)
 				saveLaterFrames = 150
 				Program.redraw(true)
-			end
+			end,
 		}
+		GameOverScreen.Buttons.ShareScore = {
+			type = Constants.ButtonTypes.NO_BORDER,
+			-- text = "",
+			-- getText = function() return "" end,
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 2, Constants.SCREEN.MARGIN + 23, 75, 11 },
+			boxColors = { "Intermediate text", "Lower box background", },
+			draw = function(this, shadowcolor)
+				local text = string.format("Points:  %s", ExtSettingsData.TotalPoints.value or 0)
+				Drawing.drawText(this.box[1], this.box[2], text, Theme.COLORS["Lower box text"], shadowcolor)
+
+				local shareText = "(Share)"
+				local offsetX = Utils.calcWordPixelLength(text) + 10
+				-- Drawing.drawImageAsPixels(Constants.PixelImages.MAGNIFYING_GLASS, this.box[1] + offsetX, this.box[2] + 1, Theme.COLORS["Intermediate text"], shadowcolor)
+				Drawing.drawText(this.box[1] + offsetX, this.box[2], shareText, Theme.COLORS["Intermediate text"], shadowcolor)
+			end,
+			onClick = function() openOptionsPopup() end,
+		}
+		-- TODO: Add the GameOverScreen button
 	end
 	local removeButtons = function()
 		TrackerScreen.Buttons.PointTotalBtn = nil
 		TrackerScreen.Buttons.PointIncrementBtn = nil
 		TrackerScreen.Buttons.PointDecrementBtn = nil
+		GameOverScreen.Buttons.ShareScore = nil
 	end
 
 	-- EXTENSION FUNCTIONS
