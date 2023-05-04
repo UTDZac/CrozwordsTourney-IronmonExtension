@@ -4,7 +4,7 @@ local function CrozwordsTourneyExtension()
 	self.name = "Tourney Point Tracker"
 	self.author = "UTDZac"
 	self.description = "This extension adds extra functionality to the Tracker for the FRLG tournament, such as counting milestone points."
-	self.version = "1.0"
+	self.version = "1.1"
 	self.url = "https://github.com/UTDZac/CrozwordsTourney-IronmonExtension"
 
 	function self.checkForUpdates()
@@ -171,12 +171,10 @@ local function CrozwordsTourneyExtension()
 		[370] = self.Milestones.PokemonTowerFC,
 		[371] = self.Milestones.PokemonTowerFC,
 
-		-- [372] = self.Milestones.????, -- no idea where this trainer is located
-
 		[417] = self.Milestones.Erika,
 		[418] = self.Milestones.Koga,
 
-		[349] = self.Milestones.SilphEscape, -- Giovanni
+		[349] = { self.Milestones.SilphEscape, self.Milestones.SilphFC, }, -- Giovanni
 
 		-- ALL SILPH CO - total 30 (exclude rival, he's implied)
 		[336] = self.Milestones.SilphFC,
@@ -322,11 +320,18 @@ local function CrozwordsTourneyExtension()
 		end
 
 		-- Add the trainer list to each milestone
-		for trainerId, milestone in pairs(TrainerMilestoneMap) do
-			if milestone.trainers == nil then
-				milestone.trainers = {}
+		for trainerId, milestoneList in pairs(TrainerMilestoneMap) do
+			-- If an individual milestone, put it into a list instead
+			if milestoneList.type then
+				milestoneList = { milestoneList }
 			end
-			milestone.trainers[trainerId] = false
+
+			for _, milestone in pairs(milestoneList) do
+				if milestone.trainers == nil then
+					milestone.trainers = {}
+				end
+				milestone.trainers[trainerId] = false
+			end
 		end
 	end
 
@@ -985,15 +990,18 @@ local function CrozwordsTourneyExtension()
 		-- https://kelseyyoung.github.io/FRLGIronmonMap/
 		local trainerId = Memory.readword(GameSettings.gTrainerBattleOpponent_A)
 
-		local milestone = TrainerMilestoneMap[trainerId]
-		if not milestone or milestone.obtained then
-			return
+		local milestoneList = TrainerMilestoneMap[trainerId] or {}
+		-- If an individual milestone, put it into a list instead
+		if milestoneList.type then
+			milestoneList = { milestoneList }
 		end
 
-		-- Mark this trainer as defeated
-		if milestone.trainers then
-			milestone.trainers[trainerId] = true
-			checkMilestoneForPoints(milestone)
+		for _, milestone in pairs(milestoneList) do
+			if not milestone.obtained and milestone.trainers then
+				-- Mark this trainer as defeated
+				milestone.trainers[trainerId] = true
+				checkMilestoneForPoints(milestone)
+			end
 		end
 	end
 
