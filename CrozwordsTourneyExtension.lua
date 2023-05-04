@@ -1,11 +1,10 @@
 local function CrozwordsTourneyExtension()
 	local self = {}
-
 	-- Define descriptive attributes of the custom extension that are displayed on the Tracker settings
-	self.name = "Crozwords Tourney Tracker"
+	self.name = "Tourney Point Tracker"
 	self.author = "UTDZac"
 	self.description = "This extension adds extra functionality to the Tracker for the FRLG tournament, such as counting milestone points."
-	self.version = "0.8"
+	self.version = "1.0"
 	self.url = "https://github.com/UTDZac/CrozwordsTourney-IronmonExtension"
 
 	function self.checkForUpdates()
@@ -55,7 +54,8 @@ local function CrozwordsTourneyExtension()
 		EscapeZone = "Escape an area",
 		FullClear = "Full clear an area",
 	}
-	local Milestones = {
+	self.Milestones = {
+		Rival1 = 			{ type = MilestoneTypes.SingleTrainer,  points = 0, ordinal = 0, exclude = true, },
 		ForestTrainer1 = 	{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 1, },
 		ForestTrainer2 = 	{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 2, },
 		ForestTrainer3 = 	{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 3, },
@@ -85,157 +85,161 @@ local function CrozwordsTourneyExtension()
 		Champion = 			{ type = MilestoneTypes.SingleTrainer, 	points = 5, ordinal = 27, },
 	}
 	local TrainerMilestoneMap = {
-		[102] = Milestones.ForestTrainer1,
-		[103] = Milestones.ForestTrainer2,
-		[104] = Milestones.ForestTrainer3,
-		[531] = Milestones.ForestTrainer4,
-		[532] = Milestones.ForestTrainer5,
-		[329] = Milestones.Rival2,
-		[330] = Milestones.Rival2,
-		[331] = Milestones.Rival2,
-		[414] = Milestones.Brock,
+		[326] = self.Milestones.Rival1, -- excluded from calculations
+		[327] = self.Milestones.Rival1, -- excluded from calculations
+		[328] = self.Milestones.Rival1, -- excluded from calculations
+
+		[102] = self.Milestones.ForestTrainer1,
+		[103] = self.Milestones.ForestTrainer2,
+		[104] = self.Milestones.ForestTrainer3,
+		[531] = self.Milestones.ForestTrainer4,
+		[532] = self.Milestones.ForestTrainer5,
+		[329] = self.Milestones.Rival2,
+		[330] = self.Milestones.Rival2,
+		[331] = self.Milestones.Rival2,
+		[414] = self.Milestones.Brock,
 
 		-- ALL MT MOON - 12 total
-		[108] = Milestones.MtMoonFC,
-		[109] = Milestones.MtMoonFC,
-		[121] = Milestones.MtMoonFC,
-		[169] = Milestones.MtMoonFC,
-		[120] = Milestones.MtMoonFC,
-		[91] = Milestones.MtMoonFC,
-		[181] = Milestones.MtMoonFC,
-		[170] = Milestones.MtMoonFC,
-		[351] = Milestones.MtMoonFC,
-		[352] = Milestones.MtMoonFC,
-		[353] = Milestones.MtMoonFC,
-		[354] = Milestones.MtMoonFC,
+		[108] = self.Milestones.MtMoonFC,
+		[109] = self.Milestones.MtMoonFC,
+		[121] = self.Milestones.MtMoonFC,
+		[169] = self.Milestones.MtMoonFC,
+		[120] = self.Milestones.MtMoonFC,
+		[91] = self.Milestones.MtMoonFC,
+		[181] = self.Milestones.MtMoonFC,
+		[170] = self.Milestones.MtMoonFC,
+		[351] = self.Milestones.MtMoonFC,
+		[352] = self.Milestones.MtMoonFC,
+		[353] = self.Milestones.MtMoonFC,
+		[354] = self.Milestones.MtMoonFC,
 
 		-- ALL SS ANNE - 16 total (exclude rival, he's implied)
-		[96] = Milestones.SSAnneFC,
-		[126] = Milestones.SSAnneFC,
-		[422] = Milestones.SSAnneFC,
-		[421] = Milestones.SSAnneFC,
-		[140] = Milestones.SSAnneFC,
-		[224] = Milestones.SSAnneFC,
-		[138] = Milestones.SSAnneFC,
-		[139] = Milestones.SSAnneFC,
-		[136] = Milestones.SSAnneFC,
-		[137] = Milestones.SSAnneFC,
-		[482] = Milestones.SSAnneFC,
-		[223] = Milestones.SSAnneFC,
-		[483] = Milestones.SSAnneFC,
-		[127] = Milestones.SSAnneFC,
-		[134] = Milestones.SSAnneFC,
-		[135] = Milestones.SSAnneFC,
+		[96] = self.Milestones.SSAnneFC,
+		[126] = self.Milestones.SSAnneFC,
+		[422] = self.Milestones.SSAnneFC,
+		[421] = self.Milestones.SSAnneFC,
+		[140] = self.Milestones.SSAnneFC,
+		[224] = self.Milestones.SSAnneFC,
+		[138] = self.Milestones.SSAnneFC,
+		[139] = self.Milestones.SSAnneFC,
+		[136] = self.Milestones.SSAnneFC,
+		[137] = self.Milestones.SSAnneFC,
+		[482] = self.Milestones.SSAnneFC,
+		[223] = self.Milestones.SSAnneFC,
+		[483] = self.Milestones.SSAnneFC,
+		[127] = self.Milestones.SSAnneFC,
+		[134] = self.Milestones.SSAnneFC,
+		[135] = self.Milestones.SSAnneFC,
 
-		[415] = Milestones.MistySurge,
-		[416] = Milestones.MistySurge,
+		[415] = self.Milestones.MistySurge,
+		[416] = self.Milestones.MistySurge,
 
 		-- ALL ROCK TUNNEL - 15 total
-		[189] = Milestones.RockTunnelFC,
-		[190] = Milestones.RockTunnelFC,
-		[191] = Milestones.RockTunnelFC,
-		[192] = Milestones.RockTunnelFC,
-		[193] = Milestones.RockTunnelFC,
-		[194] = Milestones.RockTunnelFC,
-		[166] = Milestones.RockTunnelFC,
-		[165] = Milestones.RockTunnelFC,
-		[159] = Milestones.RockTunnelFC,
-		[156] = Milestones.RockTunnelFC,
-		[164] = Milestones.RockTunnelFC,
-		[168] = Milestones.RockTunnelFC,
-		[476] = Milestones.RockTunnelFC,
-		[475] = Milestones.RockTunnelFC,
-		[474] = Milestones.RockTunnelFC,
+		[189] = self.Milestones.RockTunnelFC,
+		[190] = self.Milestones.RockTunnelFC,
+		[191] = self.Milestones.RockTunnelFC,
+		[192] = self.Milestones.RockTunnelFC,
+		[193] = self.Milestones.RockTunnelFC,
+		[194] = self.Milestones.RockTunnelFC,
+		[166] = self.Milestones.RockTunnelFC,
+		[165] = self.Milestones.RockTunnelFC,
+		[159] = self.Milestones.RockTunnelFC,
+		[156] = self.Milestones.RockTunnelFC,
+		[164] = self.Milestones.RockTunnelFC,
+		[168] = self.Milestones.RockTunnelFC,
+		[476] = self.Milestones.RockTunnelFC,
+		[475] = self.Milestones.RockTunnelFC,
+		[474] = self.Milestones.RockTunnelFC,
 
-		[348] = Milestones.RocketHideout, -- Giovanni
+		[348] = self.Milestones.RocketHideout, -- Giovanni
 
 		-- ALL POKEMON TOWER - 13 total (exclude rival and top grunts, they're implied)
-		[441] = Milestones.PokemonTowerFC,
-		[442] = Milestones.PokemonTowerFC,
-		[443] = Milestones.PokemonTowerFC,
-		[444] = Milestones.PokemonTowerFC,
-		[445] = Milestones.PokemonTowerFC,
-		[446] = Milestones.PokemonTowerFC,
-		[447] = Milestones.PokemonTowerFC,
-		[448] = Milestones.PokemonTowerFC,
-		[449] = Milestones.PokemonTowerFC,
-		[450] = Milestones.PokemonTowerFC,
-		[451] = Milestones.PokemonTowerFC,
-		[452] = Milestones.PokemonTowerFC,
-		[453] = Milestones.PokemonTowerFC,
-		[369] = Milestones.PokemonTowerFC,
-		[370] = Milestones.PokemonTowerFC,
-		[371] = Milestones.PokemonTowerFC,
+		[441] = self.Milestones.PokemonTowerFC,
+		[442] = self.Milestones.PokemonTowerFC,
+		[443] = self.Milestones.PokemonTowerFC,
+		[444] = self.Milestones.PokemonTowerFC,
+		[445] = self.Milestones.PokemonTowerFC,
+		[446] = self.Milestones.PokemonTowerFC,
+		[447] = self.Milestones.PokemonTowerFC,
+		[448] = self.Milestones.PokemonTowerFC,
+		[449] = self.Milestones.PokemonTowerFC,
+		[450] = self.Milestones.PokemonTowerFC,
+		[451] = self.Milestones.PokemonTowerFC,
+		[452] = self.Milestones.PokemonTowerFC,
+		[453] = self.Milestones.PokemonTowerFC,
+		[369] = self.Milestones.PokemonTowerFC,
+		[370] = self.Milestones.PokemonTowerFC,
+		[371] = self.Milestones.PokemonTowerFC,
 
-		-- [372] = Milestones.????, -- no idea where this trainer is located
+		-- [372] = self.Milestones.????, -- no idea where this trainer is located
 
-		[417] = Milestones.Erika,
-		[418] = Milestones.Koga,
+		[417] = self.Milestones.Erika,
+		[418] = self.Milestones.Koga,
 
-		[349] = Milestones.SilphEscape, -- Giovanni
+		[349] = self.Milestones.SilphEscape, -- Giovanni
 
 		-- ALL SILPH CO - total 30 (exclude rival, he's implied)
-		[336] = Milestones.SilphFC,
-		[337] = Milestones.SilphFC,
-		[338] = Milestones.SilphFC,
-		[339] = Milestones.SilphFC,
-		[340] = Milestones.SilphFC,
-		[341] = Milestones.SilphFC,
-		[342] = Milestones.SilphFC,
-		[343] = Milestones.SilphFC,
-		[344] = Milestones.SilphFC,
-		[345] = Milestones.SilphFC,
-		[373] = Milestones.SilphFC,
-		[374] = Milestones.SilphFC,
-		[375] = Milestones.SilphFC,
-		[376] = Milestones.SilphFC,
-		[377] = Milestones.SilphFC,
-		[378] = Milestones.SilphFC,
-		[379] = Milestones.SilphFC,
-		[380] = Milestones.SilphFC,
-		[381] = Milestones.SilphFC,
-		[382] = Milestones.SilphFC,
-		[383] = Milestones.SilphFC,
-		[384] = Milestones.SilphFC,
-		[385] = Milestones.SilphFC,
-		[386] = Milestones.SilphFC,
-		[387] = Milestones.SilphFC,
-		[388] = Milestones.SilphFC,
-		[389] = Milestones.SilphFC,
-		[390] = Milestones.SilphFC,
-		[391] = Milestones.SilphFC,
-		[286] = Milestones.SilphFC,
+		[336] = self.Milestones.SilphFC,
+		[337] = self.Milestones.SilphFC,
+		[338] = self.Milestones.SilphFC,
+		[339] = self.Milestones.SilphFC,
+		[340] = self.Milestones.SilphFC,
+		[341] = self.Milestones.SilphFC,
+		[342] = self.Milestones.SilphFC,
+		[343] = self.Milestones.SilphFC,
+		[344] = self.Milestones.SilphFC,
+		[345] = self.Milestones.SilphFC,
+		[373] = self.Milestones.SilphFC,
+		[374] = self.Milestones.SilphFC,
+		[375] = self.Milestones.SilphFC,
+		[376] = self.Milestones.SilphFC,
+		[377] = self.Milestones.SilphFC,
+		[378] = self.Milestones.SilphFC,
+		[379] = self.Milestones.SilphFC,
+		[380] = self.Milestones.SilphFC,
+		[381] = self.Milestones.SilphFC,
+		[382] = self.Milestones.SilphFC,
+		[383] = self.Milestones.SilphFC,
+		[384] = self.Milestones.SilphFC,
+		[385] = self.Milestones.SilphFC,
+		[386] = self.Milestones.SilphFC,
+		[387] = self.Milestones.SilphFC,
+		[388] = self.Milestones.SilphFC,
+		[389] = self.Milestones.SilphFC,
+		[390] = self.Milestones.SilphFC,
+		[391] = self.Milestones.SilphFC,
+		[286] = self.Milestones.SilphFC,
 
 		-- ALL CINNABAR MANSION - 6 total
-		[216] = Milestones.CinnabarFC,
-		[218] = Milestones.CinnabarFC,
-		[219] = Milestones.CinnabarFC,
-		[534] = Milestones.CinnabarFC,
-		[335] = Milestones.CinnabarFC,
-		[346] = Milestones.CinnabarFC,
-		[347] = Milestones.CinnabarFC,
+		[216] = self.Milestones.CinnabarFC,
+		[218] = self.Milestones.CinnabarFC,
+		[219] = self.Milestones.CinnabarFC,
+		[534] = self.Milestones.CinnabarFC,
+		[335] = self.Milestones.CinnabarFC,
+		[346] = self.Milestones.CinnabarFC,
+		[347] = self.Milestones.CinnabarFC,
 
-		[420] = Milestones.Sabrina,
-		[419] = Milestones.Blaine,
-		[350] = Milestones.GiovanniGym,
+		[420] = self.Milestones.Sabrina,
+		[419] = self.Milestones.Blaine,
+		[350] = self.Milestones.GiovanniGym,
 
-		[435] = Milestones.RivalVR,
-		[436] = Milestones.RivalVR,
-		[437] = Milestones.RivalVR,
+		[435] = self.Milestones.RivalVR,
+		[436] = self.Milestones.RivalVR,
+		[437] = self.Milestones.RivalVR,
 
-		[410] = Milestones.Lorelei,
-		[411] = Milestones.Bruno,
-		[412] = Milestones.Agatha,
-		[413] = Milestones.Lance,
-		[438] = Milestones.Champion,
-		[439] = Milestones.Champion,
-		[440] = Milestones.Champion,
+		[410] = self.Milestones.Lorelei,
+		[411] = self.Milestones.Bruno,
+		[412] = self.Milestones.Agatha,
+		[413] = self.Milestones.Lance,
+		[438] = self.Milestones.Champion,
+		[439] = self.Milestones.Champion,
+		[440] = self.Milestones.Champion,
 	}
 
 	local saveLaterFrames = 0 -- These frames count down and will save the extension settings when it reaches 0
 	local highlightFrames = 0 -- These frames count down and make the point count shown "highlighted"
-	local ExtLabel = "CrozwordsTourney" -- to be prepended to all other settings here
-	local ExtSettingsData = {
+	local ExtLabel = "TourneyPointTracker" -- to be prepended to all other settings here
+	self.ExtSettingsData = {
 		AutoCountPoints = {
 			value = true, -- default
 			label = "Auto count points as you play",
@@ -258,14 +262,14 @@ local function CrozwordsTourneyExtension()
 			parseMilestones = function(this)
 				this.value = this.value or ""
 				for key in (this.value .. ","):gmatch("([^,]*),") do
-					if Milestones[key] then
-						Milestones[key].obtained = true
+					if self.Milestones[key] then
+						self.Milestones[key].obtained = true
 					end
 				end
 			end,
 		},
 	}
-	for key, setting in pairs(ExtSettingsData) do
+	for key, setting in pairs(self.ExtSettingsData) do
 		setting.key = tostring(key)
 		if type(setting.load) ~= "function" then
 			setting.load = function(this)
@@ -299,6 +303,7 @@ local function CrozwordsTourneyExtension()
 			boxFill = "Upper box background",
 		},
 	}
+	local previousScreen = nil -- use to help navigate backward from the options menu, for ease of access
 
 	-- Helper Functions
 	local isSupported = function() return GameSettings.game == 3 end
@@ -309,10 +314,10 @@ local function CrozwordsTourneyExtension()
 
 	local resetMilestones = function()
 		-- ExtSettingsData.TotalPoints.value = 0 -- don't reset points, these need to accumulate across multiple seeds
-		ExtSettingsData.CurrentMilestones.value = ""
+		self.ExtSettingsData.CurrentMilestones.value = ""
 
 		-- Unobtain all milestones
-		for _, milestone in pairs(Milestones) do
+		for _, milestone in pairs(self.Milestones) do
 			milestone.obtained = false
 		end
 
@@ -329,8 +334,8 @@ local function CrozwordsTourneyExtension()
 		local obtainedMilestones = {}
 		local totalPoints = 0
 		local forestTrainers = 0
-		for key, milestone in pairs(Milestones) do
-			if milestone.obtained then
+		for key, milestone in pairs(self.Milestones) do
+			if milestone.obtained and not milestone.exclude then
 				totalPoints = totalPoints + (milestone.points or 0)
 				if key:sub(1, 6) == "Forest" then
 					forestTrainers = forestTrainers + 1
@@ -363,8 +368,8 @@ local function CrozwordsTourneyExtension()
 	end
 	local getCurrentSeedPointTotal = function()
 		local totalPoints = 0
-		for _, milestone in pairs(Milestones) do
-			if milestone.obtained then
+		for _, milestone in pairs(self.Milestones) do
+			if milestone.obtained and not milestone.exclude then
 				totalPoints = totalPoints + (milestone.points or 0)
 			end
 		end
@@ -392,7 +397,7 @@ local function CrozwordsTourneyExtension()
 			end
 		elseif milestone.type == MilestoneTypes.FullClear then
 			-- Award point for defeating all trainers depending on if its required to escape or not
-			if defeatAll(milestone.trainers) and (not ExtSettingsData.RequireEscapeArea.value or escapedZone(milestone.zone)) then
+			if defeatAll(milestone.trainers) and (not self.ExtSettingsData.RequireEscapeArea.value or escapedZone(milestone.zone)) then
 				milestone.obtained = true
 			end
 		elseif type(milestone.customCondition) == "function" and milestone:customCondition() then
@@ -401,39 +406,43 @@ local function CrozwordsTourneyExtension()
 
 		-- If newly obtained milestone, add points
 		if milestone.obtained then
-			ExtSettingsData.TotalPoints:addPoints(milestone.points)
-			CrozTourneyScreen.refreshButtons()
-			ViewCurrentScoreScreen.refreshButtons()
-			highlightFrames = 270
+			if not milestone.exclude then
+				self.ExtSettingsData.TotalPoints:addPoints(milestone.points)
+				CrozTourneyScreen.refreshButtons()
+				ViewCurrentScoreScreen.refreshButtons()
+				highlightFrames = 270
+			end
+			-- Always ave information on newly obtained milestones
 			saveLaterFrames = 150
 		end
 	end
 
 	local checkAllMilestones = function()
 		local exportTable = {}
-		for key, milestone in pairs(Milestones) do
+		for key, milestone in pairs(self.Milestones) do
 			checkMilestoneForPoints(milestone)
 			if milestone.obtained then
 				table.insert(exportTable, key)
 			end
 		end
 
+		-- Save known obtained milestones in Settings
 		if #exportTable > 0 then
-			ExtSettingsData.CurrentMilestones.value = table.concat(exportTable, ",")
+			self.ExtSettingsData.CurrentMilestones.value = table.concat(exportTable, ",")
 		end
 	end
 
 	local function loadSettingsData()
-		for _, optionObj in pairs(ExtSettingsData) do
+		for _, optionObj in pairs(self.ExtSettingsData) do
 			if type(optionObj.load) == "function" then
 				optionObj:load()
 			end
 		end
-		ExtSettingsData.CurrentMilestones:parseMilestones()
+		self.ExtSettingsData.CurrentMilestones:parseMilestones()
 	end
 
 	local function saveSettingsData()
-		for _, optionObj in pairs(ExtSettingsData) do
+		for _, optionObj in pairs(self.ExtSettingsData) do
 			if type(optionObj.save) == "function" then
 				optionObj:save()
 			end
@@ -443,8 +452,8 @@ local function CrozwordsTourneyExtension()
 	local function applyOptionsCallback(pointValue, callback)
 		local settingsWereChange = false
 
-		if ExtSettingsData.TotalPoints.value ~= pointValue then
-			ExtSettingsData.TotalPoints.value = pointValue
+		if self.ExtSettingsData.TotalPoints.value ~= pointValue then
+			self.ExtSettingsData.TotalPoints.value = pointValue
 			settingsWereChange = true
 		end
 
@@ -465,12 +474,12 @@ local function CrozwordsTourneyExtension()
 		Program.activeFormId = form
 		Utils.setFormLocation(form, 100, 50)
 
-		forms.label(form, ExtSettingsData.TotalPoints.label, 54, 20, 140, 20)
+		forms.label(form, self.ExtSettingsData.TotalPoints.label, 54, 20, 140, 20)
 
-		local textboxPoints = forms.textbox(form, ExtSettingsData.TotalPoints.value or 0, 45, 20, "UNSIGNED", 200, 18)
+		local textboxPoints = forms.textbox(form, self.ExtSettingsData.TotalPoints.value or 0, 45, 20, "UNSIGNED", 200, 18)
 
 		local saveButton = forms.button(form, "Save", function()
-			local pointsAsNumber = tonumber(forms.gettext(textboxPoints) or "") or ExtSettingsData.TotalPoints.value
+			local pointsAsNumber = tonumber(forms.gettext(textboxPoints) or "") or self.ExtSettingsData.TotalPoints.value
 			applyOptionsCallback(pointsAsNumber, callback)
 			client.unpause()
 			forms.destroy(form)
@@ -497,7 +506,7 @@ local function CrozwordsTourneyExtension()
 		local textboxShareMilestones = forms.textbox(form, exportMilestones(), 430, 60, nil, 35, 41, true, false, "Vertical")
 
 		local resetButton = forms.button(form, "Clear Seed/Points", function()
-			ExtSettingsData.TotalPoints.value = 0
+			self.ExtSettingsData.TotalPoints.value = 0
 			resetMilestones()
 			saveSettingsData()
 			forms.settext(textboxShareMilestones, exportMilestones())
@@ -526,10 +535,10 @@ local function CrozwordsTourneyExtension()
 			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 101, Constants.SCREEN.MARGIN + 14, 35, 11 },
 			boxColors = { CrozTourneyScreen.Colors.border, CrozTourneyScreen.Colors.boxFill },
 			updateSelf = function(this)
-				this.text = tostring(ExtSettingsData.TotalPoints.value or 0)
+				this.text = tostring(self.ExtSettingsData.TotalPoints.value or 0)
 			end,
 			draw = function(this, shadowcolor)
-				Drawing.drawText(Constants.SCREEN.WIDTH + 8, this.box[2], ExtSettingsData.TotalPoints.label, Theme.COLORS[CrozTourneyScreen.Colors.text], shadowcolor)
+				Drawing.drawText(Constants.SCREEN.WIDTH + 8, this.box[2], self.ExtSettingsData.TotalPoints.label, Theme.COLORS[CrozTourneyScreen.Colors.text], shadowcolor)
 				local iconOffsetX = this.box[1] + 25 -- Utils.calcWordPixelLength(this.text) + 5
 				Drawing.drawImageAsPixels(Constants.PixelImages.NOTEPAD, iconOffsetX, this.box[2], Theme.COLORS[CrozTourneyScreen.Colors.text], shadowcolor)
 			end,
@@ -538,9 +547,9 @@ local function CrozwordsTourneyExtension()
 		ViewCurrentScore = {
 			type = Constants.ButtonTypes.ICON_BORDER,
 			image = Constants.PixelImages.MAGNIFYING_GLASS,
-			text = "Points for Current Seed",
+			text = "View current seed points",
 			textColor = CrozTourneyScreen.Colors.text,
-			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 10, Constants.SCREEN.MARGIN + 88, 120, 16 },
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 10, Constants.SCREEN.MARGIN + 80, 120, 16 },
 			boxColors = { CrozTourneyScreen.Colors.border, CrozTourneyScreen.Colors.boxFill },
 			onClick = function()
 				ViewCurrentScoreScreen.buildOutPagedButtons()
@@ -549,10 +558,11 @@ local function CrozwordsTourneyExtension()
 			end
 		},
 		ShareScore = {
-			type = Constants.ButtonTypes.FULL_BORDER,
-			text = "Share Score",
+			type = Constants.ButtonTypes.ICON_BORDER,
+			image = Constants.PixelImages.INSTALL_BOX,
+			text = "Share current seed score",
 			textColor = CrozTourneyScreen.Colors.text,
-			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 4, Constants.SCREEN.MARGIN + 135, 52, 11 },
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 10, Constants.SCREEN.MARGIN + 101, 120, 16 },
 			boxColors = { CrozTourneyScreen.Colors.border, CrozTourneyScreen.Colors.boxFill },
 			onClick = function() openSharePointsPopup(CrozTourneyScreen.refreshButtons) end
 		},
@@ -562,12 +572,19 @@ local function CrozwordsTourneyExtension()
 			textColor = CrozTourneyScreen.Colors.text,
 			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 112, Constants.SCREEN.MARGIN + 135, 24, 11 },
 			boxColors = { CrozTourneyScreen.Colors.border, CrozTourneyScreen.Colors.boxFill },
-			onClick = function() Program.changeScreenView(SingleExtensionScreen) end
+			onClick = function()
+				if previousScreen ~= nil then
+					Program.changeScreenView(previousScreen)
+					previousScreen = nil
+				else
+					Program.changeScreenView(SingleExtensionScreen)
+				end
+			end
 		},
 	}
 	-- Add screen buttons
 	local buttonOffsetY = Constants.SCREEN.MARGIN + 32
-	for _, settingsOption in ipairs({ExtSettingsData.AutoCountPoints, ExtSettingsData.RequireEscapeArea, ExtSettingsData.SkipFailedAttempts}) do
+	for _, settingsOption in ipairs({self.ExtSettingsData.AutoCountPoints, self.ExtSettingsData.RequireEscapeArea, self.ExtSettingsData.SkipFailedAttempts}) do
 		local screenButton = {
 			type = Constants.ButtonTypes.CHECKBOX,
 			text = settingsOption.label,
@@ -609,8 +626,9 @@ local function CrozwordsTourneyExtension()
 			shadow = Utils.calcShadowColor(Theme.COLORS[CrozTourneyScreen.Colors.boxFill]),
 		}
 
+		local headerText = "Tourney Point Tracker"
 		local headerShadow = Utils.calcShadowColor(Theme.COLORS["Main background"])
-		Drawing.drawText(topBox.x, Constants.SCREEN.MARGIN - 2, ("Tourney Extension Settings"):upper(), Theme.COLORS["Header text"], headerShadow)
+		Drawing.drawText(topBox.x, Constants.SCREEN.MARGIN - 2, headerText:upper(), Theme.COLORS["Header text"], headerShadow)
 
 		gui.drawRectangle(topBox.x, topBox.y, topBox.width, topBox.height, topBox.border, topBox.fill)
 
@@ -633,7 +651,7 @@ local function CrozwordsTourneyExtension()
 		realignButtonsToGrid = function(this, x, y, colSpacer, rowSpacer)
 			table.sort(this.Buttons, this.defaultSort)
 			local cutoffX = Constants.SCREEN.WIDTH + Constants.SCREEN.RIGHT_GAP - Constants.SCREEN.MARGIN
-			local cutoffY = Constants.SCREEN.HEIGHT - 20
+			local cutoffY = Constants.SCREEN.HEIGHT - 30
 			local totalPages = Utils.gridAlign(this.Buttons, x, y, colSpacer, rowSpacer, true, cutoffX, cutoffY)
 			this.currentPage = 1
 			this.totalPages = totalPages or 1
@@ -672,7 +690,7 @@ local function CrozwordsTourneyExtension()
 		CurrentPage = {
 			type = Constants.ButtonTypes.NO_BORDER,
 			text = "", -- Set later via updateSelf()
-			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 53, Constants.SCREEN.MARGIN + 135, 50, 10, },
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 52, Constants.SCREEN.MARGIN + 135, 50, 10, },
 			isVisible = function() return ViewCurrentScoreScreen.Pager.totalPages > 1 end,
 			updateSelf = function(this)
 				this.text = ViewCurrentScoreScreen.Pager:getPageText()
@@ -681,7 +699,7 @@ local function CrozwordsTourneyExtension()
 		PrevPage = {
 			type = Constants.ButtonTypes.PIXELIMAGE,
 			image = Constants.PixelImages.LEFT_ARROW,
-			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 39, Constants.SCREEN.MARGIN + 136, 10, 10, },
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 38, Constants.SCREEN.MARGIN + 136, 10, 10, },
 			isVisible = function() return ViewCurrentScoreScreen.Pager.totalPages > 1 end,
 			onClick = function(this)
 				ViewCurrentScoreScreen.Pager:prevPage()
@@ -692,7 +710,7 @@ local function CrozwordsTourneyExtension()
 		NextPage = {
 			type = Constants.ButtonTypes.PIXELIMAGE,
 			image = Constants.PixelImages.RIGHT_ARROW,
-			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 98, Constants.SCREEN.MARGIN + 136, 10, 10, },
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 97, Constants.SCREEN.MARGIN + 136, 10, 10, },
 			isVisible = function() return ViewCurrentScoreScreen.Pager.totalPages > 1 end,
 			onClick = function(this)
 				ViewCurrentScoreScreen.Pager:nextPage()
@@ -720,38 +738,40 @@ local function CrozwordsTourneyExtension()
 	ViewCurrentScoreScreen.buildOutPagedButtons = function()
 		ViewCurrentScoreScreen.Pager.Buttons = {}
 
-		for key, milestone in pairs(Milestones) do
-			local button = {
-				type = Constants.ButtonTypes.NO_BORDER,
-				text = key,
-				textColor = ViewCurrentScoreScreen.Colors.text,
-				boxColors = { ViewCurrentScoreScreen.Colors.border, ViewCurrentScoreScreen.Colors.boxFill, },
-				key = key,
-				milestone = milestone,
-				ordinal = milestone.ordinal,
-				dimensions = { width = 124, height = 11, },
-				isVisible = function(this) return ViewCurrentScoreScreen.Pager.currentPage == this.pageVisible end,
-				updateSelf = function(this)
-				end,
-				draw = function(this, shadowcolor)
-					local pointsText = this.milestone.points or Constants.BLANKLINE
-					Drawing.drawText(pointsColumnOffsetX + 9, this.box[2], pointsText, Theme.COLORS[ViewCurrentScoreScreen.Colors.text], shadowcolor)
-					if this.milestone.obtained then
-						Drawing.drawText(claimedColumnOffsetX + 12, this.box[2], pointsText, Theme.COLORS["Positive text"], shadowcolor)
-					else
-						Drawing.drawText(claimedColumnOffsetX + 12, this.box[2], Constants.BLANKLINE, Theme.COLORS[this.textColor], shadowcolor)
-					end
-				end,
-				onClick = function(this)
-					this:updateSelf()
-					Program.redraw(true)
-				end,
-			}
-			table.insert(ViewCurrentScoreScreen.Pager.Buttons, button)
+		for key, milestone in pairs(self.Milestones) do
+			if not milestone.exclude then
+				local button = {
+					type = Constants.ButtonTypes.NO_BORDER,
+					text = key,
+					textColor = ViewCurrentScoreScreen.Colors.text,
+					boxColors = { ViewCurrentScoreScreen.Colors.border, ViewCurrentScoreScreen.Colors.boxFill, },
+					key = key,
+					milestone = milestone,
+					ordinal = milestone.ordinal,
+					dimensions = { width = 124, height = 11, },
+					isVisible = function(this) return ViewCurrentScoreScreen.Pager.currentPage == this.pageVisible end,
+					-- updateSelf = function(this)
+					-- end,
+					draw = function(this, shadowcolor)
+						local pointsText = this.milestone.points or Constants.BLANKLINE
+						Drawing.drawText(pointsColumnOffsetX + 9, this.box[2], pointsText, Theme.COLORS[ViewCurrentScoreScreen.Colors.text], shadowcolor)
+						if this.milestone.obtained then
+							Drawing.drawImageAsPixels(Constants.PixelImages.CHECKMARK, claimedColumnOffsetX + 12, this.box[2], Theme.COLORS["Positive text"], shadowcolor)
+						else
+							Drawing.drawText(claimedColumnOffsetX + 12, this.box[2], Constants.BLANKLINE, Theme.COLORS[this.textColor], shadowcolor)
+						end
+					end,
+					-- onClick = function(this)
+					-- 	this:updateSelf()
+					-- 	Program.redraw(true)
+					-- end,
+				}
+				table.insert(ViewCurrentScoreScreen.Pager.Buttons, button)
+			end
 		end
 
 		local x = Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 2
-		local y = Constants.SCREEN.MARGIN + 25
+		local y = Constants.SCREEN.MARGIN + 15
 		local colSpacer = 1
 		local rowSpacer = 1
 		ViewCurrentScoreScreen.Pager:realignButtonsToGrid(x, y, colSpacer, rowSpacer)
@@ -767,33 +787,33 @@ local function CrozwordsTourneyExtension()
 		gui.defaultTextBackground(Theme.COLORS[ViewCurrentScoreScreen.Colors.boxFill])
 		local topBox = {
 			x = Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN,
-			y = Constants.SCREEN.MARGIN + 10,
+			y = Constants.SCREEN.MARGIN,
 			width = Constants.SCREEN.RIGHT_GAP - (Constants.SCREEN.MARGIN * 2),
-			height = Constants.SCREEN.HEIGHT - (Constants.SCREEN.MARGIN * 2) - 10,
+			height = Constants.SCREEN.HEIGHT - (Constants.SCREEN.MARGIN * 2),
 			text = Theme.COLORS[ViewCurrentScoreScreen.Colors.text],
 			border = Theme.COLORS[ViewCurrentScoreScreen.Colors.border],
 			fill = Theme.COLORS[ViewCurrentScoreScreen.Colors.boxFill],
 			shadow = Utils.calcShadowColor(Theme.COLORS[ViewCurrentScoreScreen.Colors.boxFill]),
 		}
-
-		local headerShadow = Utils.calcShadowColor(Theme.COLORS["Main background"])
-		Drawing.drawText(topBox.x, Constants.SCREEN.MARGIN - 2, "Current Seed Score:", Theme.COLORS["Header text"], headerShadow)
-		local headerPoints = ViewCurrentScoreScreen.Buttons.TotalScore.text or Constants.BLANKLINE
-		Drawing.drawText(claimedColumnOffsetX + 12, Constants.SCREEN.MARGIN - 2, headerPoints, Theme.COLORS[Theme.headerHighlightKey], headerShadow)
+		local offsetY = topBox.y + 2
 
 		gui.drawRectangle(topBox.x, topBox.y, topBox.width, topBox.height, topBox.border, topBox.fill)
 
 		-- Draw header labels
-		local offsetY = topBox.y + 2
 		Drawing.drawText(topBox.x + 3, offsetY, "Milestone", Theme.COLORS["Intermediate text"], topBox.shadow)
 		Drawing.drawText(pointsColumnOffsetX, offsetY, "Points", Theme.COLORS["Intermediate text"], topBox.shadow)
 		Drawing.drawText(claimedColumnOffsetX, offsetY, "Claimed", Theme.COLORS["Intermediate text"], topBox.shadow)
 
 		-- Draw header underlines
-		offsetY = offsetY + 10
-		gui.drawLine(topBox.x + 4, offsetY, topBox.x + 42, offsetY, Theme.COLORS[topBox.text])
-		gui.drawLine(pointsColumnOffsetX + 1, offsetY, pointsColumnOffsetX + 25, offsetY, Theme.COLORS[topBox.text])
-		gui.drawLine(claimedColumnOffsetX + 1, offsetY, claimedColumnOffsetX + 33, offsetY, Theme.COLORS[topBox.text])
+		offsetY = offsetY + 11
+		gui.drawLine(topBox.x + 4, offsetY, topBox.x + 42, offsetY, topBox.border)
+		gui.drawLine(pointsColumnOffsetX + 1, offsetY, pointsColumnOffsetX + 25, offsetY, topBox.border)
+		gui.drawLine(claimedColumnOffsetX + 1, offsetY, claimedColumnOffsetX + 33, offsetY, topBox.border)
+
+		offsetY = 127
+		Drawing.drawText(topBox.x + 3, offsetY, "Current Seed Score:", Theme.COLORS["Intermediate text"], topBox.shadow)
+		local headerPoints = ViewCurrentScoreScreen.Buttons.TotalScore.text or Constants.BLANKLINE
+		Drawing.drawText(claimedColumnOffsetX + 12, offsetY, headerPoints, Theme.COLORS["Positive text"], topBox.shadow)
 
 		for _, button in pairs(ViewCurrentScoreScreen.Buttons) do
 			Drawing.drawButton(button, topBox.shadow)
@@ -815,11 +835,15 @@ local function CrozwordsTourneyExtension()
 				local headerText = "Points:"
 				Drawing.drawText(this.box[1] - 10, this.box[2] - 10, headerText, Theme.COLORS[this.textColor], shadowcolor)
 
-				local pointNumber = tostring(ExtSettingsData.TotalPoints.value or 0)
+				local pointNumber = tostring(self.ExtSettingsData.TotalPoints.value or 0)
 				local pointNumberColor = Utils.inlineIf(highlightFrames > 0, "Intermediate text", "Default text")
 				Drawing.drawText(this.box[1], this.box[2], pointNumber, Theme.COLORS[pointNumberColor], shadowcolor)
 			end,
-			onClick = function() openEditPointsPopup() end,
+			onClick = function()
+				previousScreen = TrackerScreen
+				CrozTourneyScreen.refreshButtons()
+				Program.changeScreenView(CrozTourneyScreen)
+			end,
 		}
 		TrackerScreen.Buttons.PointIncrementBtn = {
 			type = Constants.ButtonTypes.NO_BORDER,
@@ -836,7 +860,7 @@ local function CrozwordsTourneyExtension()
 				Drawing.drawText(this.box[1], this.box[2], text, Theme.COLORS[this.textColor], nil, 5, Constants.Font.FAMILY)
 			end,
 			onClick = function()
-				ExtSettingsData.TotalPoints:addPoints(1)
+				self.ExtSettingsData.TotalPoints:addPoints(1)
 				saveLaterFrames = 150
 				Program.redraw(true)
 			end,
@@ -856,7 +880,7 @@ local function CrozwordsTourneyExtension()
 				Drawing.drawText(this.box[1], this.box[2], text, Theme.COLORS[this.textColor], nil, 5, Constants.Font.FAMILY)
 			end,
 			onClick = function()
-				ExtSettingsData.TotalPoints:addPoints(-1)
+				self.ExtSettingsData.TotalPoints:addPoints(-1)
 				saveLaterFrames = 150
 				Program.redraw(true)
 			end,
@@ -868,11 +892,11 @@ local function CrozwordsTourneyExtension()
 			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 2, Constants.SCREEN.MARGIN + 23, 75, 11 },
 			boxColors = { "Intermediate text", "Lower box background", },
 			draw = function(this, shadowcolor)
-				local text = string.format("Points:  %s", ExtSettingsData.TotalPoints.value or 0)
+				local text = string.format("Seed Points:  %s", getCurrentSeedPointTotal() or 0)
 				Drawing.drawText(this.box[1], this.box[2], text, Theme.COLORS["Lower box text"], shadowcolor)
 
 				local shareText = "(Share)"
-				local offsetX = Utils.calcWordPixelLength(text) + 10
+				local offsetX = Utils.calcWordPixelLength(text) + 6
 				-- Drawing.drawImageAsPixels(Constants.PixelImages.MAGNIFYING_GLASS, this.box[1] + offsetX, this.box[2] + 1, Theme.COLORS["Intermediate text"], shadowcolor)
 				Drawing.drawText(this.box[1] + offsetX, this.box[2], shareText, Theme.COLORS["Intermediate text"], shadowcolor)
 			end,
@@ -888,6 +912,7 @@ local function CrozwordsTourneyExtension()
 
 	-- EXTENSION FUNCTIONS
 	function self.configureOptions()
+		previousScreen = SingleExtensionScreen
 		CrozTourneyScreen.refreshButtons()
 		Program.changeScreenView(CrozTourneyScreen)
 	end
@@ -933,7 +958,7 @@ local function CrozwordsTourneyExtension()
 			Options["Track PC Heals"] = false
 		end
 
-		if ExtSettingsData.AutoCountPoints.value then
+		if self.ExtSettingsData.AutoCountPoints.value then
 			checkAllMilestones()
 
 			if highlightFrames > 0 then
@@ -949,7 +974,7 @@ local function CrozwordsTourneyExtension()
 	end
 
 	function self.afterBattleEnds()
-		if not isSupported() or not ExtSettingsData.AutoCountPoints.value then return end
+		if not isSupported() or not self.ExtSettingsData.AutoCountPoints.value then return end
 
 		local wonTheBattle = (Memory.readbyte(GameSettings.gBattleOutcome) == 1)
 		if not wonTheBattle then
@@ -975,10 +1000,10 @@ local function CrozwordsTourneyExtension()
 	-- [Bizhawk only] Executed each frame (60 frames per second)
 	-- CAUTION: Avoid unnecessary calculations here, as this can easily affect performance.
 	function self.inputCheckBizhawk()
-		if Main.loadNextSeed and ExtSettingsData.SkipFailedAttempts.value then
-			-- Skip this attempt if the rival was not beaten
-			local trainersDefeated = Utils.getGameStat(Constants.GAME_STATS.TRAINER_BATTLES) or 0
-			if trainersDefeated == 0 then
+		if Main.loadNextSeed and self.ExtSettingsData.SkipFailedAttempts.value then
+			-- Skip this attempt if the first rival was not beaten
+			-- Don't skip if two or more trainers were beaten.
+			if not self.Milestones.Rival1.obtained and Utils.getGameStat(Constants.GAME_STATS.TRAINER_BATTLES) < 2 then
 				Main.currentSeed = Main.currentSeed - 1
 			end
 		end
