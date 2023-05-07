@@ -4,7 +4,7 @@ local function CrozwordsTourneyExtension()
 	self.name = "Tourney Point Tracker"
 	self.author = "UTDZac"
 	self.description = "This extension adds extra functionality to the Tracker for the FRLG tournament, such as counting milestone points."
-	self.version = "1.1"
+	self.version = "1.2"
 	self.url = "https://github.com/UTDZac/CrozwordsTourney-IronmonExtension"
 
 	function self.checkForUpdates()
@@ -24,6 +24,17 @@ local function CrozwordsTourneyExtension()
 		PokemonTower = { [161] = true, [162] = true, [163] = true, [164] = true, [165] = true, [166] = true, [167] = true },
 		SilphCo = { [132] = true, [133] = true, [134] = true, [135] = true, [136] = true, [137] = true, [138] = true, [139] = true, [140] = true, [141] = true, [142] = true, [229] = true },
 		CinnabarMansion = { [143] = true, [144] = true, [145] = true, [146] = true },
+	}
+
+	local listPixelIcon = {
+		{1,1,1,1,1,1,0,0,1,1},
+		{0,0,0,0,0,0,0,0,0,0},
+		{1,1,1,1,1,1,0,0,1,1},
+		{0,0,0,0,0,0,0,0,0,0},
+		{1,1,1,1,1,1,0,0,1,1},
+		{0,0,0,0,0,0,0,0,0,0},
+		{1,1,1,1,1,1,0,0,1,1},
+		{0,0,0,0,0,0,0,0,0,0},
 	}
 
 	-- Common conditions for obtaining milestones
@@ -265,6 +276,19 @@ local function CrozwordsTourneyExtension()
 					end
 				end
 			end,
+			updateSelf = function(this)
+				local exportTable = {}
+				for key, milestone in pairs(self.Milestones) do
+					if milestone.obtained then
+						table.insert(exportTable, key)
+					end
+				end
+				if #exportTable > 0 then
+					this.value = table.concat(exportTable, ",")
+				else
+					this.value = ""
+				end
+			end,
 		},
 	}
 	for key, setting in pairs(self.ExtSettingsData) do
@@ -371,6 +395,7 @@ local function CrozwordsTourneyExtension()
 		local includeAnS = Utils.inlineIf(totalPoints ~= 1, "s", "")
 		return string.format("%s Point%s: %s", totalPoints, includeAnS, milestoneText)
 	end
+
 	local getCurrentSeedPointTotal = function()
 		local totalPoints = 0
 		for _, milestone in pairs(self.Milestones) do
@@ -379,6 +404,34 @@ local function CrozwordsTourneyExtension()
 			end
 		end
 		return totalPoints
+	end
+
+	local obtainMilestone = function(milestone)
+		milestone.obtained = true
+		if not milestone.exclude then
+			self.ExtSettingsData.TotalPoints:addPoints(milestone.points or 0)
+			CrozTourneyScreen.refreshButtons()
+			ViewCurrentScoreScreen.refreshButtons()
+			highlightFrames = 270
+		end
+		self.ExtSettingsData.CurrentMilestones:updateSelf()
+		saveLaterFrames = 150
+	end
+
+	local unobtainMilestone = function(milestone)
+		milestone.obtained = false
+		for trainerId, _ in pairs(milestone.trainers or {}) do
+			milestone.trainers[trainerId] = false
+		end
+
+		if not milestone.exclude then
+			self.ExtSettingsData.TotalPoints:addPoints(-1 * (milestone.points or 0))
+			CrozTourneyScreen.refreshButtons()
+			ViewCurrentScoreScreen.refreshButtons()
+			highlightFrames = 270
+		end
+		self.ExtSettingsData.CurrentMilestones:updateSelf()
+		saveLaterFrames = 150
 	end
 
 	-- If conditions are met to receive milestone, mark it as obtained and add points
@@ -411,30 +464,15 @@ local function CrozwordsTourneyExtension()
 
 		-- If newly obtained milestone, add points
 		if milestone.obtained then
-			if not milestone.exclude then
-				self.ExtSettingsData.TotalPoints:addPoints(milestone.points)
-				CrozTourneyScreen.refreshButtons()
-				ViewCurrentScoreScreen.refreshButtons()
-				highlightFrames = 270
-			end
-			-- Always ave information on newly obtained milestones
-			saveLaterFrames = 150
+			obtainMilestone(milestone)
 		end
 	end
 
 	local checkAllMilestones = function()
-		local exportTable = {}
-		for key, milestone in pairs(self.Milestones) do
+		for _, milestone in pairs(self.Milestones) do
 			checkMilestoneForPoints(milestone)
-			if milestone.obtained then
-				table.insert(exportTable, key)
-			end
 		end
-
-		-- Save known obtained milestones in Settings
-		if #exportTable > 0 then
-			self.ExtSettingsData.CurrentMilestones.value = table.concat(exportTable, ",")
-		end
+		self.ExtSettingsData.CurrentMilestones:updateSelf()
 	end
 
 	local function loadSettingsData()
@@ -525,6 +563,17 @@ local function CrozwordsTourneyExtension()
 		end, 390, 110)
 	end
 
+	-- Determines if the seed should be counted, for purposes of incrementing the Attempts count and showing the share button
+	local shouldSeedBeCounted = function()
+		-- Option isn't even enabled, then count all seeds
+		if not self.ExtSettingsData.SkipFailedAttempts.value then
+			return true
+		end
+
+		-- Include this attempt if the first rival was beaten or if two or more trainers were beaten.
+		return self.Milestones.Rival1.obtained or Utils.getGameStat(Constants.GAME_STATS.TRAINER_BATTLES) > 1
+	end
+
 	CrozTourneyScreen.refreshButtons = function()
 		for _, button in pairs(CrozTourneyScreen.Buttons) do
 			if type(button.updateSelf) == "function" then
@@ -551,7 +600,7 @@ local function CrozwordsTourneyExtension()
 		},
 		ViewCurrentScore = {
 			type = Constants.ButtonTypes.ICON_BORDER,
-			image = Constants.PixelImages.MAGNIFYING_GLASS,
+			image = listPixelIcon or Constants.PixelImages.MAGNIFYING_GLASS,
 			text = "View current seed points",
 			textColor = CrozTourneyScreen.Colors.text,
 			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 10, Constants.SCREEN.MARGIN + 80, 120, 16 },
@@ -656,7 +705,7 @@ local function CrozwordsTourneyExtension()
 		realignButtonsToGrid = function(this, x, y, colSpacer, rowSpacer)
 			table.sort(this.Buttons, this.defaultSort)
 			local cutoffX = Constants.SCREEN.WIDTH + Constants.SCREEN.RIGHT_GAP - Constants.SCREEN.MARGIN
-			local cutoffY = Constants.SCREEN.HEIGHT - 30
+			local cutoffY = Constants.SCREEN.HEIGHT - 25
 			local totalPages = Utils.gridAlign(this.Buttons, x, y, colSpacer, rowSpacer, true, cutoffX, cutoffY)
 			this.currentPage = 1
 			this.totalPages = totalPages or 1
@@ -755,8 +804,8 @@ local function CrozwordsTourneyExtension()
 					ordinal = milestone.ordinal,
 					dimensions = { width = 124, height = 11, },
 					isVisible = function(this) return ViewCurrentScoreScreen.Pager.currentPage == this.pageVisible end,
-					-- updateSelf = function(this)
-					-- end,
+					updateSelf = function(this)
+					end,
 					draw = function(this, shadowcolor)
 						local pointsText = this.milestone.points or Constants.BLANKLINE
 						Drawing.drawText(pointsColumnOffsetX + 9, this.box[2], pointsText, Theme.COLORS[ViewCurrentScoreScreen.Colors.text], shadowcolor)
@@ -766,17 +815,23 @@ local function CrozwordsTourneyExtension()
 							Drawing.drawText(claimedColumnOffsetX + 12, this.box[2], Constants.BLANKLINE, Theme.COLORS[this.textColor], shadowcolor)
 						end
 					end,
-					-- onClick = function(this)
-					-- 	this:updateSelf()
-					-- 	Program.redraw(true)
-					-- end,
+					onClick = function(this)
+						this.milestone.obtained = not this.milestone.obtained
+						if this.milestone.obtained then
+							obtainMilestone(this.milestone)
+						else
+							unobtainMilestone(this.milestone)
+						end
+						this:updateSelf()
+						Program.redraw(true)
+					end,
 				}
 				table.insert(ViewCurrentScoreScreen.Pager.Buttons, button)
 			end
 		end
 
 		local x = Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 2
-		local y = Constants.SCREEN.MARGIN + 15
+		local y = Constants.SCREEN.MARGIN + 43
 		local colSpacer = 1
 		local rowSpacer = 1
 		ViewCurrentScoreScreen.Pager:realignButtonsToGrid(x, y, colSpacer, rowSpacer)
@@ -804,6 +859,13 @@ local function CrozwordsTourneyExtension()
 
 		gui.drawRectangle(topBox.x, topBox.y, topBox.width, topBox.height, topBox.border, topBox.fill)
 
+		Drawing.drawText(topBox.x + 3, offsetY, "Current Seed Score:", Theme.COLORS["Intermediate text"], topBox.shadow)
+		local headerPoints = ViewCurrentScoreScreen.Buttons.TotalScore.text or Constants.BLANKLINE
+		Drawing.drawText(claimedColumnOffsetX + 12, offsetY, headerPoints, Theme.COLORS["Positive text"], topBox.shadow)
+		offsetY = offsetY + 11
+		Drawing.drawText(topBox.x + 3, offsetY, "Click below to claim or unclaim:", topBox.text, topBox.shadow)
+		offsetY = offsetY + 15
+
 		-- Draw header labels
 		Drawing.drawText(topBox.x + 3, offsetY, "Milestone", Theme.COLORS["Intermediate text"], topBox.shadow)
 		Drawing.drawText(pointsColumnOffsetX, offsetY, "Points", Theme.COLORS["Intermediate text"], topBox.shadow)
@@ -814,11 +876,6 @@ local function CrozwordsTourneyExtension()
 		gui.drawLine(topBox.x + 4, offsetY, topBox.x + 42, offsetY, topBox.border)
 		gui.drawLine(pointsColumnOffsetX + 1, offsetY, pointsColumnOffsetX + 25, offsetY, topBox.border)
 		gui.drawLine(claimedColumnOffsetX + 1, offsetY, claimedColumnOffsetX + 33, offsetY, topBox.border)
-
-		offsetY = 127
-		Drawing.drawText(topBox.x + 3, offsetY, "Current Seed Score:", Theme.COLORS["Intermediate text"], topBox.shadow)
-		local headerPoints = ViewCurrentScoreScreen.Buttons.TotalScore.text or Constants.BLANKLINE
-		Drawing.drawText(claimedColumnOffsetX + 12, offsetY, headerPoints, Theme.COLORS["Positive text"], topBox.shadow)
 
 		for _, button in pairs(ViewCurrentScoreScreen.Buttons) do
 			Drawing.drawButton(button, topBox.shadow)
@@ -895,10 +952,12 @@ local function CrozwordsTourneyExtension()
 			-- text = "",
 			-- getText = function() return "" end,
 			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 2, Constants.SCREEN.MARGIN + 23, 75, 11 },
-			boxColors = { "Intermediate text", "Lower box background", },
+			boxColors = { "Intermediate text", "Upper box background", },
+			isVisible = function() return shouldSeedBeCounted() end,
 			draw = function(this, shadowcolor)
+				shadowcolor = Utils.calcShadowColor(Theme.COLORS[this.boxColors[2]])
 				local text = string.format("Seed Points:  %s", getCurrentSeedPointTotal() or 0)
-				Drawing.drawText(this.box[1], this.box[2], text, Theme.COLORS["Lower box text"], shadowcolor)
+				Drawing.drawText(this.box[1], this.box[2], text, Theme.COLORS["Default text"], shadowcolor)
 
 				local shareText = "(Share)"
 				local offsetX = Utils.calcWordPixelLength(text) + 6
@@ -1008,12 +1067,8 @@ local function CrozwordsTourneyExtension()
 	-- [Bizhawk only] Executed each frame (60 frames per second)
 	-- CAUTION: Avoid unnecessary calculations here, as this can easily affect performance.
 	function self.inputCheckBizhawk()
-		if Main.loadNextSeed and self.ExtSettingsData.SkipFailedAttempts.value then
-			-- Skip this attempt if the first rival was not beaten
-			-- Don't skip if two or more trainers were beaten.
-			if not self.Milestones.Rival1.obtained and Utils.getGameStat(Constants.GAME_STATS.TRAINER_BATTLES) < 2 then
-				Main.currentSeed = Main.currentSeed - 1
-			end
+		if Main.loadNextSeed and not shouldSeedBeCounted() then
+			Main.currentSeed = Main.currentSeed - 1
 		end
 	end
 
