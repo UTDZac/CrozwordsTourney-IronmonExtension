@@ -4,7 +4,7 @@ local function CrozwordsTourneyExtension()
 	self.name = "Tourney Point Tracker"
 	self.author = "UTDZac"
 	self.description = "This extension adds extra functionality to the Tracker for the FRLG tournament, such as counting milestone points."
-	self.version = "1.2"
+	self.version = "1.3"
 	self.url = "https://github.com/UTDZac/CrozwordsTourney-IronmonExtension"
 
 	function self.checkForUpdates()
@@ -146,18 +146,18 @@ local function CrozwordsTourneyExtension()
 		[416] = self.Milestones.MistySurge,
 
 		-- ALL ROCK TUNNEL - 15 total
-		[189] = self.Milestones.RockTunnelFC,
+		[168] = self.Milestones.RockTunnelFC,
+		[166] = self.Milestones.RockTunnelFC,
+		[159] = self.Milestones.RockTunnelFC,
+		[165] = self.Milestones.RockTunnelFC,
 		[190] = self.Milestones.RockTunnelFC,
 		[191] = self.Milestones.RockTunnelFC,
 		[192] = self.Milestones.RockTunnelFC,
 		[193] = self.Milestones.RockTunnelFC,
 		[194] = self.Milestones.RockTunnelFC,
-		[166] = self.Milestones.RockTunnelFC,
-		[165] = self.Milestones.RockTunnelFC,
-		[159] = self.Milestones.RockTunnelFC,
-		[156] = self.Milestones.RockTunnelFC,
+		[158] = self.Milestones.RockTunnelFC,
+		[189] = self.Milestones.RockTunnelFC,
 		[164] = self.Milestones.RockTunnelFC,
-		[168] = self.Milestones.RockTunnelFC,
 		[476] = self.Milestones.RockTunnelFC,
 		[475] = self.Milestones.RockTunnelFC,
 		[474] = self.Milestones.RockTunnelFC,
