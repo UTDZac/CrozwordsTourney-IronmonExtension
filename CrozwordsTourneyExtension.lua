@@ -3,8 +3,8 @@ local function CrozwordsTourneyExtension()
 	-- Define descriptive attributes of the custom extension that are displayed on the Tracker settings
 	self.name = "Tourney Point Tracker"
 	self.author = "UTDZac"
-	self.description = "This extension adds extra functionality to the Tracker for the FRLG tournament, such as counting milestone points."
-	self.version = "1.3"
+	self.description = "This extension adds extra functionality to the Tracker for counting and displaying points, great for friendly competitions."
+	self.version = "2.0"
 	self.url = "https://github.com/UTDZac/CrozwordsTourney-IronmonExtension"
 
 	function self.checkForUpdates()
@@ -27,14 +27,14 @@ local function CrozwordsTourneyExtension()
 	}
 
 	local listPixelIcon = {
-		{1,1,1,1,1,1,0,0,1,1},
-		{0,0,0,0,0,0,0,0,0,0},
-		{1,1,1,1,1,1,0,0,1,1},
-		{0,0,0,0,0,0,0,0,0,0},
-		{1,1,1,1,1,1,0,0,1,1},
-		{0,0,0,0,0,0,0,0,0,0},
-		{1,1,1,1,1,1,0,0,1,1},
-		{0,0,0,0,0,0,0,0,0,0},
+		{1,1,1,1,1,1,0,1,1},
+		{0,0,0,0,0,0,0,0,0},
+		{1,1,1,1,1,1,0,1,1},
+		{0,0,0,0,0,0,0,0,0},
+		{1,1,1,1,1,1,0,1,1},
+		{0,0,0,0,0,0,0,0,0},
+		{1,1,1,1,1,1,0,1,1},
+		{0,0,0,0,0,0,0,0,0},
 	}
 
 	-- Common conditions for obtaining milestones
@@ -66,34 +66,183 @@ local function CrozwordsTourneyExtension()
 		FullClear = "Full clear an area",
 	}
 	self.Milestones = {
-		Rival1 = 			{ type = MilestoneTypes.SingleTrainer,  points = 0, ordinal = 0, exclude = true, },
-		ForestTrainer1 = 	{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 1, },
-		ForestTrainer2 = 	{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 2, },
-		ForestTrainer3 = 	{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 3, },
-		ForestTrainer4 = 	{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 4, },
-		ForestTrainer5 = 	{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 5, },
-		Rival2 = 			{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 6, },
-		Brock = 			{ type = MilestoneTypes.SingleTrainer, 	points = 3, ordinal = 7, },
-		MtMoonFC = 			{ type = MilestoneTypes.FullClear, 		points = 1, ordinal = 8, zone = Zones.MtMoon, },
-		SSAnneFC = 			{ type = MilestoneTypes.FullClear, 		points = 1, ordinal = 9, zone = Zones.SSAnne, },
-		MistySurge = 		{ type = MilestoneTypes.AllTrainers, 	points = 1, ordinal = 10, },
-		RockTunnelFC = 		{ type = MilestoneTypes.FullClear, 		points = 1, ordinal = 11, zone = Zones.RockTunnel, },
-		RocketHideout = 	{ type = MilestoneTypes.EscapeZone, 	points = 1, ordinal = 12, zone = Zones.RocketHideout, },
-		PokemonTowerFC = 	{ type = MilestoneTypes.FullClear, 		points = 1, ordinal = 13, zone = Zones.PokemonTower, },
-		Erika = 			{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 14, },
-		Koga = 				{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 15, },
-		SilphEscape = 		{ type = MilestoneTypes.EscapeZone, 	points = 1, ordinal = 16, zone = Zones.SilphCo, },
-		SilphFC = 			{ type = MilestoneTypes.FullClear, 		points = 3, ordinal = 17, zone = Zones.SilphCo, },
-		CinnabarFC = 		{ type = MilestoneTypes.FullClear, 		points = 1, ordinal = 18, zone = Zones.CinnabarMansion, },
-		Sabrina = 			{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 19, },
-		Blaine = 			{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 20, },
-		GiovanniGym = 		{ type = MilestoneTypes.SingleTrainer, 	points = 2, ordinal = 21, },
-		RivalVR = 			{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 22, },
-		Lorelei = 			{ type = MilestoneTypes.SingleTrainer, 	points = 1, ordinal = 23, },
-		Bruno = 			{ type = MilestoneTypes.SingleTrainer, 	points = 2, ordinal = 24, },
-		Agatha = 			{ type = MilestoneTypes.SingleTrainer, 	points = 2, ordinal = 25, },
-		Lance = 			{ type = MilestoneTypes.SingleTrainer, 	points = 3, ordinal = 26, },
-		Champion = 			{ type = MilestoneTypes.SingleTrainer, 	points = 5, ordinal = 27, },
+		Rival1 = {
+			label = "Rival: Lab",
+			type = MilestoneTypes.SingleTrainer,
+			points = 0,
+			ordinal = 0,
+			exclude = true, -- won't be appears in milestone list or included seed scoring
+		},
+		ForestTrainer1 = {
+			label = "1st Forest Trainer",
+			type = MilestoneTypes.SingleTrainer,
+			points = 1,
+			ordinal = 1,
+		},
+		ForestTrainer2 = {
+			label = "2nd Forest Trainer",
+			type = MilestoneTypes.SingleTrainer,
+			points = 1,
+			ordinal = 2,
+		},
+		ForestTrainer3 = {
+			label = "3rd Forest Trainer",
+			type = MilestoneTypes.SingleTrainer,
+			points = 1,
+			ordinal = 3,
+		},
+		ForestTrainer4 = {
+			label = "4th Forest Trainer",
+			type = MilestoneTypes.SingleTrainer,
+			points = 1,
+			ordinal = 4,
+		},
+		ForestTrainer5 = {
+			label = "5th Forest Trainer",
+			type = MilestoneTypes.SingleTrainer,
+			points = 1,
+			ordinal = 5,
+		},
+		Rival2 = {
+			label = "Rival: Pre-Brock",
+			type = MilestoneTypes.SingleTrainer,
+			points = 1,
+			ordinal = 6,
+		},
+		Brock = {
+			label = "Gym 1: Brock",
+			type = MilestoneTypes.SingleTrainer,
+			points = 3,
+			ordinal = 7,
+		},
+		MtMoonFC = {
+			label = "Mt. Moon FC",
+			type = MilestoneTypes.FullClear,
+			points = 1,
+			ordinal = 8,
+			zone = Zones.MtMoon,
+		},
+		SSAnneFC = {
+			label = "S.S. Anne FC",
+			type = MilestoneTypes.FullClear,
+			points = 1,
+			ordinal = 9,
+			zone = Zones.SSAnne,
+		},
+		MistySurge = {
+			label = "Gym: Misty & Surge",
+			type = MilestoneTypes.AllTrainers,
+			points = 1,
+			ordinal = 10,
+		},
+		RockTunnelFC = {
+			label = "Rock Tunnel FC",
+			type = MilestoneTypes.FullClear,
+			points = 1,
+			ordinal = 11,
+			zone = Zones.RockTunnel,
+		},
+		RocketHideout = {
+			label = "Rocket Hideout",
+			type = MilestoneTypes.EscapeZone,
+			points = 1,
+			ordinal = 12,
+			zone = Zones.RocketHideout,
+		},
+		PokemonTowerFC = {
+			label = Constants.Words.POKEMON .. " Tower FC",
+			type = MilestoneTypes.FullClear,
+			points = 1,
+			ordinal = 13,
+			zone = Zones.PokemonTower,
+		},
+		Erika = {
+			label = "Gym 4: Erika",
+			type = MilestoneTypes.SingleTrainer,
+			points = 1,
+			ordinal = 14,
+		},
+		Koga = {
+			label = "Gym 5: Koga",
+			type = MilestoneTypes.SingleTrainer,
+			points = 1,
+			ordinal = 15,
+		},
+		SilphEscape = {
+			label = "Silph Co. Escape",
+			type = MilestoneTypes.EscapeZone,
+			points = 1,
+			ordinal = 16,
+			zone = Zones.SilphCo,
+		},
+		SilphFC = {
+			label = "Silph Co. FC",
+			type = MilestoneTypes.FullClear,
+			points = 3,
+			ordinal = 17,
+			zone = Zones.SilphCo,
+		},
+		CinnabarFC = {
+			label = "Cinn. Mansion FC",
+			type = MilestoneTypes.FullClear,
+			points = 1,
+			ordinal = 18,
+			zone = Zones.CinnabarMansion,
+		},
+		Sabrina = {
+			label = "Gym 6: Sabrina",
+			type = MilestoneTypes.SingleTrainer,
+			points = 1,
+			ordinal = 19,
+		},
+		Blaine = {
+			label = "Gym 7: Blaine",
+			type = MilestoneTypes.SingleTrainer,
+			points = 1,
+			ordinal = 20,
+		},
+		GiovanniGym = {
+			label = "Gym 8: Giovanni",
+			type = MilestoneTypes.SingleTrainer,
+			points = 2,
+			ordinal = 21,
+		},
+		RivalVR = {
+			label = "Rival: Victory Road",
+			type = MilestoneTypes.SingleTrainer,
+			points = 1,
+			ordinal = 22,
+		},
+		Lorelei = {
+			label = "E4: Lorelei",
+			type = MilestoneTypes.SingleTrainer,
+			points = 1,
+			ordinal = 23,
+		},
+		Bruno = {
+			label = "E4: Bruno",
+			type = MilestoneTypes.SingleTrainer,
+			points = 2,
+			ordinal = 24,
+		},
+		Agatha = {
+			label = "E4: Agatha",
+			type = MilestoneTypes.SingleTrainer,
+			points = 2,
+			ordinal = 25,
+		},
+		Lance = {
+			label = "E4: Lance",
+			type = MilestoneTypes.SingleTrainer,
+			points = 3,
+			ordinal = 26,
+		},
+		Champion = {
+			label = "E4: Champion",
+			type = MilestoneTypes.SingleTrainer,
+			points = 5,
+			ordinal = 27,
+		},
 	}
 	local TrainerMilestoneMap = {
 		[326] = self.Milestones.Rival1, -- excluded from calculations
@@ -268,8 +417,8 @@ local function CrozwordsTourneyExtension()
 		},
 		CurrentMilestones = {
 			value = "",
-			parseMilestones = function(this)
-				this.value = this.value or ""
+			parse = function(this, input)
+				this.value = input or this.value or ""
 				for key in (this.value .. ","):gmatch("([^,]*),") do
 					if self.Milestones[key] then
 						self.Milestones[key].obtained = true
@@ -281,6 +430,44 @@ local function CrozwordsTourneyExtension()
 				for key, milestone in pairs(self.Milestones) do
 					if milestone.obtained then
 						table.insert(exportTable, key)
+					end
+				end
+				if #exportTable > 0 then
+					this.value = table.concat(exportTable, ",")
+				else
+					this.value = ""
+				end
+			end,
+		},
+		DefeatedTrainers = {
+			value = "",
+			-- Loads a string of numbers (TrainerIds) into all milestones that have those trainers
+			parse = function(this, input)
+				this.value = input or this.value or ""
+				for trainerIdStr in (this.value .. ","):gmatch("([^,]*),") do
+					local trainerId = tonumber(trainerIdStr)
+					if trainerId then
+						for _, milestone in pairs(self.Milestones) do
+							if milestone.trainers == nil then
+								milestone.trainers = {}
+							end
+							-- Only update trainers that exist in that milestone
+							if milestone.trainers[trainerId] ~= nil then
+								milestone.trainers[trainerId] = true
+							end
+						end
+					end
+				end
+			end,
+			updateSelf = function(this)
+				local exportTable = {}
+				for _, milestone in pairs(self.Milestones) do
+					if not milestone.obtained then
+						for trainerId, isDefeated in pairs(milestone.trainers) do
+							if isDefeated then
+								table.insert(exportTable, trainerId)
+							end
+						end
 					end
 				end
 				if #exportTable > 0 then
@@ -332,6 +519,14 @@ local function CrozwordsTourneyExtension()
 
 	local shouldShowPoints = function()
 		return Program.currentScreen == TrackerScreen and Tracker.Data.isViewingOwn and not TrackerScreen.canShowBallPicker()
+	end
+
+	local updateSettings = function()
+		for _, setting in pairs(self.ExtSettingsData) do
+			if type(setting.updateSelf) == "function" then
+				setting:updateSelf()
+			end
+		end
 	end
 
 	local resetMilestones = function()
@@ -414,7 +609,7 @@ local function CrozwordsTourneyExtension()
 			ViewCurrentScoreScreen.refreshButtons()
 			highlightFrames = 270
 		end
-		self.ExtSettingsData.CurrentMilestones:updateSelf()
+		updateSettings()
 		saveLaterFrames = 150
 	end
 
@@ -430,7 +625,7 @@ local function CrozwordsTourneyExtension()
 			ViewCurrentScoreScreen.refreshButtons()
 			highlightFrames = 270
 		end
-		self.ExtSettingsData.CurrentMilestones:updateSelf()
+		updateSettings()
 		saveLaterFrames = 150
 	end
 
@@ -472,7 +667,7 @@ local function CrozwordsTourneyExtension()
 		for _, milestone in pairs(self.Milestones) do
 			checkMilestoneForPoints(milestone)
 		end
-		self.ExtSettingsData.CurrentMilestones:updateSelf()
+		updateSettings()
 	end
 
 	local function loadSettingsData()
@@ -481,7 +676,8 @@ local function CrozwordsTourneyExtension()
 				optionObj:load()
 			end
 		end
-		self.ExtSettingsData.CurrentMilestones:parseMilestones()
+		self.ExtSettingsData.CurrentMilestones:parse()
+		self.ExtSettingsData.DefeatedTrainers:parse()
 	end
 
 	local function saveSettingsData()
@@ -601,9 +797,9 @@ local function CrozwordsTourneyExtension()
 		ViewCurrentScore = {
 			type = Constants.ButtonTypes.ICON_BORDER,
 			image = listPixelIcon or Constants.PixelImages.MAGNIFYING_GLASS,
-			text = "View current seed points",
+			text = "View Milestones",
 			textColor = CrozTourneyScreen.Colors.text,
-			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 10, Constants.SCREEN.MARGIN + 80, 120, 16 },
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 8, Constants.SCREEN.MARGIN + 80, 124, 16 },
 			boxColors = { CrozTourneyScreen.Colors.border, CrozTourneyScreen.Colors.boxFill },
 			onClick = function()
 				ViewCurrentScoreScreen.buildOutPagedButtons()
@@ -614,9 +810,9 @@ local function CrozwordsTourneyExtension()
 		ShareScore = {
 			type = Constants.ButtonTypes.ICON_BORDER,
 			image = Constants.PixelImages.INSTALL_BOX,
-			text = "Share current seed score",
+			text = "Share Current Seed Score",
 			textColor = CrozTourneyScreen.Colors.text,
-			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 10, Constants.SCREEN.MARGIN + 101, 120, 16 },
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 8, Constants.SCREEN.MARGIN + 101, 124, 16 },
 			boxColors = { CrozTourneyScreen.Colors.border, CrozTourneyScreen.Colors.boxFill },
 			onClick = function() openSharePointsPopup(CrozTourneyScreen.refreshButtons) end
 		},
@@ -796,7 +992,7 @@ local function CrozwordsTourneyExtension()
 			if not milestone.exclude then
 				local button = {
 					type = Constants.ButtonTypes.NO_BORDER,
-					text = key,
+					text = milestone.label or key,
 					textColor = ViewCurrentScoreScreen.Colors.text,
 					boxColors = { ViewCurrentScoreScreen.Colors.border, ViewCurrentScoreScreen.Colors.boxFill, },
 					key = key,
@@ -863,7 +1059,7 @@ local function CrozwordsTourneyExtension()
 		local headerPoints = ViewCurrentScoreScreen.Buttons.TotalScore.text or Constants.BLANKLINE
 		Drawing.drawText(claimedColumnOffsetX + 12, offsetY, headerPoints, Theme.COLORS["Positive text"], topBox.shadow)
 		offsetY = offsetY + 11
-		Drawing.drawText(topBox.x + 3, offsetY, "Click below to claim or unclaim:", topBox.text, topBox.shadow)
+		Drawing.drawText(topBox.x + 3, offsetY, "Click below to claim or remove:", topBox.text, topBox.shadow)
 		offsetY = offsetY + 15
 
 		-- Draw header labels
@@ -898,7 +1094,7 @@ local function CrozwordsTourneyExtension()
 				Drawing.drawText(this.box[1] - 10, this.box[2] - 10, headerText, Theme.COLORS[this.textColor], shadowcolor)
 
 				local pointNumber = tostring(self.ExtSettingsData.TotalPoints.value or 0)
-				local pointNumberColor = Utils.inlineIf(highlightFrames > 0, "Intermediate text", "Default text")
+				local pointNumberColor = Utils.inlineIf(highlightFrames > 0, "Positive text", "Default text")
 				Drawing.drawText(this.box[1], this.box[2], pointNumber, Theme.COLORS[pointNumberColor], shadowcolor)
 			end,
 			onClick = function()
@@ -1055,12 +1251,19 @@ local function CrozwordsTourneyExtension()
 			milestoneList = { milestoneList }
 		end
 
+		local isMilestoneTrainerDefeated = false
 		for _, milestone in pairs(milestoneList) do
 			if not milestone.obtained and milestone.trainers then
 				-- Mark this trainer as defeated
 				milestone.trainers[trainerId] = true
 				checkMilestoneForPoints(milestone)
+				isMilestoneTrainerDefeated = true
 			end
+		end
+
+		if isMilestoneTrainerDefeated then
+			updateSettings()
+			saveLaterFrames = 150
 		end
 	end
 
