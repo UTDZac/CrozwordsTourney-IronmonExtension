@@ -4,7 +4,7 @@ local function CrozwordsTourneyExtension()
 	self.name = "Tourney Point Tracker"
 	self.author = "UTDZac"
 	self.description = "This extension adds extra functionality to the Tracker for counting and displaying points, great for friendly competitions."
-	self.version = "2.0"
+	self.version = "2.1"
 	self.url = "https://github.com/UTDZac/CrozwordsTourney-IronmonExtension"
 
 	function self.checkForUpdates()
@@ -130,7 +130,7 @@ local function CrozwordsTourneyExtension()
 			zone = Zones.SSAnne,
 		},
 		MistySurge = {
-			label = "Gym: Misty & Surge",
+			label = "Gym: Misty + Surge",
 			type = MilestoneTypes.AllTrainers,
 			points = 1,
 			ordinal = 10,
@@ -629,6 +629,16 @@ local function CrozwordsTourneyExtension()
 		saveLaterFrames = 150
 	end
 
+	local countRemainingTrainers = function(milestone)
+		local numNotDefeated = 0
+		for _, isDefeated in pairs(milestone.trainers or {}) do
+			if not isDefeated then
+				numNotDefeated = numNotDefeated + 1
+			end
+		end
+		return numNotDefeated
+	end
+
 	-- If conditions are met to receive milestone, mark it as obtained and add points
 	local checkMilestoneForPoints = function(milestone)
 		if not milestone or milestone.obtained then return end
@@ -1007,8 +1017,12 @@ local function CrozwordsTourneyExtension()
 						Drawing.drawText(pointsColumnOffsetX + 9, this.box[2], pointsText, Theme.COLORS[ViewCurrentScoreScreen.Colors.text], shadowcolor)
 						if this.milestone.obtained then
 							Drawing.drawImageAsPixels(Constants.PixelImages.CHECKMARK, claimedColumnOffsetX + 12, this.box[2], Theme.COLORS["Positive text"], shadowcolor)
+						elseif this.milestone.type == MilestoneTypes.AllTrainers or this.milestone.type == MilestoneTypes.FullClear then
+							local trainersRemaining = countRemainingTrainers(this.milestone) or Constants.BLANKLINE
+							Drawing.drawText(claimedColumnOffsetX + 3, this.box[2], string.format("%s left", trainersRemaining), Theme.COLORS[this.textColor], shadowcolor)
 						else
-							Drawing.drawText(claimedColumnOffsetX + 12, this.box[2], Constants.BLANKLINE, Theme.COLORS[this.textColor], shadowcolor)
+							-- Removed for now
+							-- Drawing.drawText(claimedColumnOffsetX + 12, this.box[2], Constants.BLANKLINE, Theme.COLORS[this.textColor], shadowcolor)
 						end
 					end,
 					onClick = function(this)
