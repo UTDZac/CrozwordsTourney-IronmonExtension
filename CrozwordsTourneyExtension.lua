@@ -4,7 +4,7 @@ local function CrozwordsTourneyExtension()
 	self.name = "Tourney Point Tracker"
 	self.author = "UTDZac"
 	self.description = "This extension adds extra functionality to the Tracker for counting and displaying points, great for friendly competitions."
-	self.version = "2.1"
+	self.version = "3.0"
 	self.url = "https://github.com/UTDZac/CrozwordsTourney-IronmonExtension"
 
 	function self.checkForUpdates()
@@ -16,6 +16,7 @@ local function CrozwordsTourneyExtension()
 		return isUpdateAvailable, downloadUrl
 	end
 
+	-- https://github.com/pret/pokefirered/blob/918ed2d31eeeb036230d0912cc2527b83788bc85/include/constants/layouts.h
 	local Zones = {
 		MtMoon = { [114] = true, [115] = true, [116] = true },
 		SSAnne = { [120] = true, [121] = true, [122] = true, [123] = true, [177] = true, [178] = true },
@@ -24,6 +25,8 @@ local function CrozwordsTourneyExtension()
 		PokemonTower = { [161] = true, [162] = true, [163] = true, [164] = true, [165] = true, [166] = true, [167] = true },
 		SilphCo = { [132] = true, [133] = true, [134] = true, [135] = true, [136] = true, [137] = true, [138] = true, [139] = true, [140] = true, [141] = true, [142] = true, [229] = true },
 		CinnabarMansion = { [143] = true, [144] = true, [145] = true, [146] = true },
+		Dojo = { [228] = true },
+		VictoryRoad = { [125] = true, [126] = true, [127] = true, },
 	}
 
 	local listPixelIcon = {
@@ -55,209 +58,363 @@ local function CrozwordsTourneyExtension()
 		return true
 	end
 	local escapedZone = function(zone)
-		-- "Escape" successful if there is no associated zone, or the player isn't there anymore
+		-- Escape "successful" if there is no associated zone, or the player isn't there anymore
 		return not zone or not zone[TrackerAPI.getMapId()]
+	end
+
+	-- Ensures the point value is above the minimum threshold (-100) and below the max (100)
+	local verifyPointMax = function(value)
+		if type(value) ~= "number" then
+			return 0
+		elseif value > 100 then
+			return 100
+		elseif value < -100 then
+			return -100
+		end
+		return value
 	end
 
 	local MilestoneTypes = {
 		SingleTrainer = "Defeat a single trainer",
 		AllTrainers = "Defeat all trainers",
-		EscapeZone = "Escape an area",
-		FullClear = "Full clear an area",
+		EscapeZone = "Defeat all required trainers and escape the area",
+		FullClear = "Full clear an area; optionally must escape",
 	}
-	self.Milestones = {
-		Rival1 = {
-			label = "Rival: Lab",
-			type = MilestoneTypes.SingleTrainer,
-			points = 0,
-			ordinal = 0,
-			exclude = true, -- won't be appears in milestone list or included seed scoring
+
+	local defaultMilestones = {
+		{
+			key = "Rival1", -- Internal Lable used for quick reference from the milestone list
+			exportKey = "R1", -- Must be exactly 2-characters and unique
+			label = "Rival: Lab", -- External label shown to use
+			type = MilestoneTypes.SingleTrainer, -- Requirements to obtain the milestone
+			points = 1, -- Number of points awarded when obtained
+			exclude = true, -- Excluded from the default list of active milestones (can be enabled in UI)
 		},
-		ForestTrainer1 = {
-			label = "1st Forest Trainer",
-			type = MilestoneTypes.SingleTrainer,
-			points = 1,
-			ordinal = 1,
-		},
-		ForestTrainer2 = {
-			label = "2nd Forest Trainer",
+		{
+			key = "ForestTrainer1",
+			exportKey = "F1",
+			label = "Forest Trainer 1",
 			type = MilestoneTypes.SingleTrainer,
 			points = 1,
-			ordinal = 2,
 		},
-		ForestTrainer3 = {
-			label = "3rd Forest Trainer",
+		{
+			key = "ForestTrainer2",
+			exportKey = "F2",
+			label = "Forest Trainer 2",
 			type = MilestoneTypes.SingleTrainer,
 			points = 1,
-			ordinal = 3,
 		},
-		ForestTrainer4 = {
-			label = "4th Forest Trainer",
+		{
+			key = "ForestTrainer3",
+			exportKey = "F3",
+			label = "Forest Trainer 3",
 			type = MilestoneTypes.SingleTrainer,
 			points = 1,
-			ordinal = 4,
 		},
-		ForestTrainer5 = {
-			label = "5th Forest Trainer",
+		{
+			key = "ForestTrainer4",
+			exportKey = "F4",
+			label = "Forest Trainer 4",
 			type = MilestoneTypes.SingleTrainer,
 			points = 1,
-			ordinal = 5,
 		},
-		Rival2 = {
-			label = "Rival: Pre-Brock",
+		{
+			key = "ForestTrainer5",
+			exportKey = "F5",
+			label = "Forest Trainer 5",
 			type = MilestoneTypes.SingleTrainer,
 			points = 1,
-			ordinal = 6,
 		},
-		Brock = {
+		{
+			key = "Rival2",
+			exportKey = "R2",
+			label = "Rival: Route 22",
+			type = MilestoneTypes.SingleTrainer,
+			points = 1,
+			exclude = true,
+		},
+		{
+			key = "Brock",
+			exportKey = "G1",
 			label = "Gym 1: Brock",
 			type = MilestoneTypes.SingleTrainer,
 			points = 3,
-			ordinal = 7,
 		},
-		MtMoonFC = {
+		{
+			key = "MtMoonEscape",
+			exportKey = "ME",
+			label = "Mt. Moon Exit",
+			type = MilestoneTypes.EscapeZone,
+			points = 1,
+			zone = Zones.MtMoon,
+			exclude = true,
+		},
+		{
+			key = "MtMoonFC",
+			exportKey = "MF",
 			label = "Mt. Moon FC",
 			type = MilestoneTypes.FullClear,
-			points = 1,
-			ordinal = 8,
+			points = 2,
 			zone = Zones.MtMoon,
 		},
-		SSAnneFC = {
+		{
+			key = "RivalBridge",
+			exportKey = "R3",
+			label = "Rival: Bridge",
+			type = MilestoneTypes.SingleTrainer,
+			points = 1,
+		},
+		{
+			key = "Misty",
+			exportKey = "G2",
+			label = "Gym 2: Misty",
+			type = MilestoneTypes.SingleTrainer,
+			points = 1,
+		},
+		{
+			key = "RivalBoat",
+			exportKey = "R4",
+			label = "Rival: S.S. Anne",
+			type = MilestoneTypes.SingleTrainer,
+			points = 1,
+			exclude = true,
+		},
+		{
+			key = "SSAnneFC",
+			exportKey = "AF",
 			label = "S.S. Anne FC",
 			type = MilestoneTypes.FullClear,
 			points = 1,
-			ordinal = 9,
 			zone = Zones.SSAnne,
 		},
-		MistySurge = {
-			label = "Gym: Misty + Surge",
-			type = MilestoneTypes.AllTrainers,
+		{
+			key = "Surge",
+			exportKey = "G3",
+			label = "Gym 3: Surge",
+			type = MilestoneTypes.SingleTrainer,
 			points = 1,
-			ordinal = 10,
 		},
-		RockTunnelFC = {
+		{
+			key = "RockTunnelEscape",
+			exportKey = "RE",
+			label = "Rock Tunnel Exit",
+			type = MilestoneTypes.EscapeZone,
+			points = 1,
+			zone = Zones.RockTunnel,
+		},
+		{
+			key = "RockTunnelFC",
+			exportKey = "RF",
 			label = "Rock Tunnel FC",
 			type = MilestoneTypes.FullClear,
 			points = 1,
-			ordinal = 11,
 			zone = Zones.RockTunnel,
 		},
-		RocketHideout = {
-			label = "Rocket Hideout",
+		{
+			key = "RivalTower",
+			exportKey = "R5",
+			label = "Rival: Tower",
+			type = MilestoneTypes.SingleTrainer,
+			points = 1,
+		},
+		{
+			key = "RocketHideout",
+			exportKey = "HE",
+			label = "Rocket Hideout Exit",
 			type = MilestoneTypes.EscapeZone,
 			points = 1,
-			ordinal = 12,
 			zone = Zones.RocketHideout,
 		},
-		PokemonTowerFC = {
+		{
+			key = "PokemonTowerFC",
+			exportKey = "TF",
 			label = Constants.Words.POKEMON .. " Tower FC",
 			type = MilestoneTypes.FullClear,
 			points = 1,
-			ordinal = 13,
 			zone = Zones.PokemonTower,
+			exclude = true,
 		},
-		Erika = {
+		{
+			key = "Erika",
+			exportKey = "G4",
 			label = "Gym 4: Erika",
 			type = MilestoneTypes.SingleTrainer,
 			points = 1,
-			ordinal = 14,
 		},
-		Koga = {
+		{
+			key = "Koga",
+			exportKey = "G5",
 			label = "Gym 5: Koga",
 			type = MilestoneTypes.SingleTrainer,
 			points = 1,
-			ordinal = 15,
 		},
-		SilphEscape = {
-			label = "Silph Co. Escape",
+		{
+			key = "RivalSilph",
+			exportKey = "R6",
+			label = "Rival: Silph Co.",
+			type = MilestoneTypes.SingleTrainer,
+			points = 1,
+		},
+		{
+			key = "SilphEscape",
+			exportKey = "SE",
+			label = "Silph Co. Exit",
 			type = MilestoneTypes.EscapeZone,
 			points = 1,
-			ordinal = 16,
 			zone = Zones.SilphCo,
 		},
-		SilphFC = {
+		{
+			key = "SilphFC",
+			exportKey = "SF",
 			label = "Silph Co. FC",
 			type = MilestoneTypes.FullClear,
 			points = 3,
-			ordinal = 17,
 			zone = Zones.SilphCo,
 		},
-		CinnabarFC = {
-			label = "Cinn. Mansion FC",
+		{
+			key = "Dojo",
+			exportKey = "DJ",
+			label = "Fighting Dojo",
 			type = MilestoneTypes.FullClear,
 			points = 1,
-			ordinal = 18,
-			zone = Zones.CinnabarMansion,
+			zone = Zones.Dojo,
+			exclude = true,
 		},
-		Sabrina = {
+		{
+			key = "Sabrina",
+			exportKey = "G6",
 			label = "Gym 6: Sabrina",
 			type = MilestoneTypes.SingleTrainer,
 			points = 1,
-			ordinal = 19,
 		},
-		Blaine = {
+		{
+			key = "CinnabarFC",
+			exportKey = "CF",
+			label = "Cinn. Mansion FC",
+			type = MilestoneTypes.FullClear,
+			points = 1,
+			zone = Zones.CinnabarMansion,
+		},
+		{
+			key = "Blaine",
+			exportKey = "G7",
 			label = "Gym 7: Blaine",
 			type = MilestoneTypes.SingleTrainer,
 			points = 1,
-			ordinal = 20,
 		},
-		GiovanniGym = {
+		{
+			key = "GiovanniGym",
+			exportKey = "G8",
 			label = "Gym 8: Giovanni",
 			type = MilestoneTypes.SingleTrainer,
 			points = 2,
-			ordinal = 21,
 		},
-		RivalVR = {
+		{
+			key = "RivalVR",
+			exportKey = "R7",
 			label = "Rival: Victory Road",
 			type = MilestoneTypes.SingleTrainer,
 			points = 1,
-			ordinal = 22,
 		},
-		Lorelei = {
-			label = "E4: Lorelei",
+		{
+			key = "VictoryRoad",
+			exportKey = "VF",
+			label = "Victory Road FC",
+			type = MilestoneTypes.FullClear,
+			points = 1,
+			zone = Zones.VictoryRoad,
+			exclude = true,
+		},
+		{
+			key = "Lorelei",
+			exportKey = "E1",
+			label = "Elite 4: Lorelei",
 			type = MilestoneTypes.SingleTrainer,
 			points = 1,
-			ordinal = 23,
 		},
-		Bruno = {
-			label = "E4: Bruno",
+		{
+			key = "Bruno",
+			exportKey = "E2",
+			label = "Elite 4: Bruno",
 			type = MilestoneTypes.SingleTrainer,
 			points = 2,
-			ordinal = 24,
 		},
-		Agatha = {
-			label = "E4: Agatha",
+		{
+			key = "Agatha",
+			exportKey = "E3",
+			label = "Elite 4: Agatha",
 			type = MilestoneTypes.SingleTrainer,
 			points = 2,
-			ordinal = 25,
 		},
-		Lance = {
-			label = "E4: Lance",
+		{
+			key = "Lance",
+			exportKey = "E4",
+			label = "Elite 4: Lance",
 			type = MilestoneTypes.SingleTrainer,
 			points = 3,
-			ordinal = 26,
 		},
-		Champion = {
-			label = "E4: Champion",
+		{
+			key = "Champion",
+			exportKey = "E5",
+			label = "Elite 4: Champion",
 			type = MilestoneTypes.SingleTrainer,
 			points = 5,
-			ordinal = 27,
 		},
 	}
-	local TrainerMilestoneMap = {
-		[326] = self.Milestones.Rival1, -- excluded from calculations
-		[327] = self.Milestones.Rival1, -- excluded from calculations
-		[328] = self.Milestones.Rival1, -- excluded from calculations
+	self.Milestones = {}
+	self.ExportKeysMap = {} -- Used for quicker lookups during load/save milestone list
+	for i, defaultMilestone in ipairs(defaultMilestones) do
+		self.Milestones[defaultMilestone.key] = {}
+		local milestone = self.Milestones[defaultMilestone.key]
+		-- Copy the default milestone data
+		for k, v in pairs(defaultMilestone) do
+			milestone[k] = v
+		end
 
+		milestone.ordinal = i
+		self.ExportKeysMap[milestone.exportKey] = milestone
+	end
+
+	local TrainerMilestoneMap = {
+		-- GYMS - 8 total
+		[414] = self.Milestones.Brock,
+		[415] = self.Milestones.Misty,
+		[416] = self.Milestones.Surge,
+		[417] = self.Milestones.Erika,
+		[418] = self.Milestones.Koga,
+		[420] = self.Milestones.Sabrina,
+		[419] = self.Milestones.Blaine,
+		[350] = self.Milestones.GiovanniGym,
+
+		-- RIVALS - 7 unique sets
+		[326] = self.Milestones.Rival1,
+		[327] = self.Milestones.Rival1,
+		[328] = self.Milestones.Rival1,
+		[329] = self.Milestones.Rival2,
+		[330] = self.Milestones.Rival2,
+		[331] = self.Milestones.Rival2,
+		[332] = self.Milestones.RivalBridge,
+		[333] = self.Milestones.RivalBridge,
+		[334] = self.Milestones.RivalBridge,
+		[426] = self.Milestones.RivalBoat,
+		[427] = self.Milestones.RivalBoat,
+		[428] = self.Milestones.RivalBoat,
+		[429] = self.Milestones.RivalTower,
+		[430] = self.Milestones.RivalTower,
+		[431] = self.Milestones.RivalTower,
+		[432] = self.Milestones.RivalSilph,
+		[433] = self.Milestones.RivalSilph,
+		[434] = self.Milestones.RivalSilph,
+		[435] = self.Milestones.RivalVR,
+		[436] = self.Milestones.RivalVR,
+		[437] = self.Milestones.RivalVR,
+
+		-- VIRIDIAN FOREST - 5 total
 		[102] = self.Milestones.ForestTrainer1,
 		[103] = self.Milestones.ForestTrainer2,
 		[104] = self.Milestones.ForestTrainer3,
 		[531] = self.Milestones.ForestTrainer4,
 		[532] = self.Milestones.ForestTrainer5,
-		[329] = self.Milestones.Rival2,
-		[330] = self.Milestones.Rival2,
-		[331] = self.Milestones.Rival2,
-		[414] = self.Milestones.Brock,
 
 		-- ALL MT MOON - 12 total
 		[108] = self.Milestones.MtMoonFC,
@@ -267,7 +424,7 @@ local function CrozwordsTourneyExtension()
 		[120] = self.Milestones.MtMoonFC,
 		[91] = self.Milestones.MtMoonFC,
 		[181] = self.Milestones.MtMoonFC,
-		[170] = self.Milestones.MtMoonFC,
+		[170] = { self.Milestones.MtMoonFC, self.Milestones.MtMoonEscape, }, -- Final required trainer Miguel
 		[351] = self.Milestones.MtMoonFC,
 		[352] = self.Milestones.MtMoonFC,
 		[353] = self.Milestones.MtMoonFC,
@@ -291,9 +448,6 @@ local function CrozwordsTourneyExtension()
 		[134] = self.Milestones.SSAnneFC,
 		[135] = self.Milestones.SSAnneFC,
 
-		[415] = self.Milestones.MistySurge,
-		[416] = self.Milestones.MistySurge,
-
 		-- ALL ROCK TUNNEL - 15 total
 		[168] = self.Milestones.RockTunnelFC,
 		[166] = self.Milestones.RockTunnelFC,
@@ -309,7 +463,7 @@ local function CrozwordsTourneyExtension()
 		[164] = self.Milestones.RockTunnelFC,
 		[476] = self.Milestones.RockTunnelFC,
 		[475] = self.Milestones.RockTunnelFC,
-		[474] = self.Milestones.RockTunnelFC,
+		[474] = { self.Milestones.RockTunnelFC, self.Milestones.RockTunnelEscape, }, -- Final required trainer Dana
 
 		[348] = self.Milestones.RocketHideout, -- Giovanni
 
@@ -330,9 +484,6 @@ local function CrozwordsTourneyExtension()
 		[369] = self.Milestones.PokemonTowerFC,
 		[370] = self.Milestones.PokemonTowerFC,
 		[371] = self.Milestones.PokemonTowerFC,
-
-		[417] = self.Milestones.Erika,
-		[418] = self.Milestones.Koga,
 
 		[349] = { self.Milestones.SilphEscape, self.Milestones.SilphFC, }, -- Giovanni
 
@@ -368,6 +519,13 @@ local function CrozwordsTourneyExtension()
 		[391] = self.Milestones.SilphFC,
 		[286] = self.Milestones.SilphFC,
 
+		-- ALL FIGHTING DOJO - 5 total
+		[317] = self.Milestones.Dojo,
+		[318] = self.Milestones.Dojo,
+		[319] = self.Milestones.Dojo,
+		[320] = self.Milestones.Dojo,
+		[321] = self.Milestones.Dojo,
+
 		-- ALL CINNABAR MANSION - 6 total
 		[216] = self.Milestones.CinnabarFC,
 		[218] = self.Milestones.CinnabarFC,
@@ -377,13 +535,19 @@ local function CrozwordsTourneyExtension()
 		[346] = self.Milestones.CinnabarFC,
 		[347] = self.Milestones.CinnabarFC,
 
-		[420] = self.Milestones.Sabrina,
-		[419] = self.Milestones.Blaine,
-		[350] = self.Milestones.GiovanniGym,
-
-		[435] = self.Milestones.RivalVR,
-		[436] = self.Milestones.RivalVR,
-		[437] = self.Milestones.RivalVR,
+		-- ALL VICTORY ROAD - 12 total
+		[406] = self.Milestones.VictoryRoad,
+		[396] = self.Milestones.VictoryRoad,
+		[325] = self.Milestones.VictoryRoad,
+		[287] = self.Milestones.VictoryRoad,
+		[298] = self.Milestones.VictoryRoad,
+		[290] = self.Milestones.VictoryRoad,
+		[393] = self.Milestones.VictoryRoad,
+		[167] = self.Milestones.VictoryRoad,
+		[404] = self.Milestones.VictoryRoad,
+		[394] = self.Milestones.VictoryRoad,
+		[403] = self.Milestones.VictoryRoad,
+		[485] = self.Milestones.VictoryRoad,
 
 		[410] = self.Milestones.Lorelei,
 		[411] = self.Milestones.Bruno,
@@ -402,20 +566,20 @@ local function CrozwordsTourneyExtension()
 			value = true, -- default
 			label = "Auto count points as you play",
 		},
-		RequireEscapeArea = {
-			value = false, -- default
-			label = "Must exit dungeons for points",
-		},
 		SkipFailedAttempts = {
 			value = false, -- default
 			label = "Only count runs out of the lab",
+		},
+		RequireEscapeArea = {
+			value = false, -- default
+			label = "Must exit dungeons for points",
 		},
 		TotalPoints = {
 			value = 0, -- default
 			label = "Total points for all seeds:",
 			addPoints = function(this, val) if this.value then this.value = this.value + (val or 0) end end,
 		},
-		CurrentMilestones = {
+		ObtainedMilestones = {
 			value = "",
 			parse = function(this, input)
 				this.value = input or this.value or ""
@@ -429,6 +593,7 @@ local function CrozwordsTourneyExtension()
 				local exportTable = {}
 				for key, milestone in pairs(self.Milestones) do
 					if milestone.obtained then
+						-- Use 'key' instead of 'exportKey' for upgrade compatibility
 						table.insert(exportTable, key)
 					end
 				end
@@ -463,7 +628,7 @@ local function CrozwordsTourneyExtension()
 				local exportTable = {}
 				for _, milestone in pairs(self.Milestones) do
 					if not milestone.obtained then
-						for trainerId, isDefeated in pairs(milestone.trainers) do
+						for trainerId, isDefeated in pairs(milestone.trainers or {}) do
 							if isDefeated then
 								table.insert(exportTable, trainerId)
 							end
@@ -474,6 +639,42 @@ local function CrozwordsTourneyExtension()
 					this.value = table.concat(exportTable, ",")
 				else
 					this.value = ""
+				end
+			end,
+		},
+		ActiveMilestoneList = {
+			value = "",
+			format = "%s%s%s", -- "EXPORTKEY ACTIVE POINTS", always 2 characters + 1 character + N characters (no spaces)
+			parse = function(this, input)
+				this.value = input or this.value or ""
+				for importValue in (this.value .. ","):gmatch("([^,]*),") do
+					local exportKey = importValue:sub(1, 2)
+					local activeStatusStr = importValue:sub(3, 3)
+					local pointsStr = importValue:sub(4)
+
+					local milestone = self.ExportKeysMap[exportKey]
+					if milestone then
+						milestone.exclude = activeStatusStr ~= "1"
+						milestone.points = verifyPointMax(tonumber(pointsStr or ""))
+					end
+				end
+			end,
+			updateSelf = function(this)
+				this.value = this:exportToString(self.Milestones)
+			end,
+			exportToString = function(this, milestoneList)
+				local exportTable = {}
+				-- Export in-order
+				for _, m in ipairs(defaultMilestones) do
+					local milestone = milestoneList[m.key] or m
+					local activeStatus = Utils.inlineIf(milestone.exclude, "0", "1")
+					local exportedVale = string.format(this.format, milestone.exportKey, activeStatus, milestone.points or 0)
+					table.insert(exportTable, exportedVale)
+				end
+				if #exportTable > 0 then
+					return table.concat(exportTable, ",")
+				else
+					return ""
 				end
 			end,
 		},
@@ -512,6 +713,13 @@ local function CrozwordsTourneyExtension()
 			boxFill = "Upper box background",
 		},
 	}
+	local EditMilestonesScreen = {
+		Colors = {
+			text = "Default text",
+			border = "Upper box border",
+			boxFill = "Upper box background",
+		},
+	}
 	local previousScreen = nil -- use to help navigate backward from the options menu, for ease of access
 
 	-- Helper Functions
@@ -531,7 +739,7 @@ local function CrozwordsTourneyExtension()
 
 	local resetMilestones = function()
 		-- ExtSettingsData.TotalPoints.value = 0 -- don't reset points, these need to accumulate across multiple seeds
-		self.ExtSettingsData.CurrentMilestones.value = ""
+		self.ExtSettingsData.ObtainedMilestones.value = ""
 
 		-- Unobtain all milestones
 		for _, milestone in pairs(self.Milestones) do
@@ -685,9 +893,10 @@ local function CrozwordsTourneyExtension()
 			if type(optionObj.load) == "function" then
 				optionObj:load()
 			end
+			if type(optionObj.parse) == "function" then
+				optionObj:parse()
+			end
 		end
-		self.ExtSettingsData.CurrentMilestones:parse()
-		self.ExtSettingsData.DefeatedTrainers:parse()
 	end
 
 	local function saveSettingsData()
@@ -780,6 +989,76 @@ local function CrozwordsTourneyExtension()
 		return self.Milestones.Rival1.obtained or Utils.getGameStat(Constants.GAME_STATS.TRAINER_BATTLES) > 1
 	end
 
+	local promptMilestoneSetPoint = function(milestone)
+		local title = string.format("%s Points", milestone.label or milestone.key)
+		local editLabel = string.format('Points for %s (max 100):', milestone.label or milestone.key)
+		local form = Utils.createBizhawkForm(title, 320, 130)
+
+		forms.label(form, editLabel, 48, 10, 300, 20)
+		local textBox = forms.textbox(form, (milestone.points or 0), 200, 30, "SIGNED", 50, 30)
+		forms.button(form, "Save", function()
+			local pointNumber = tonumber(forms.gettext(textBox) or "")
+			if pointNumber then
+				local pointsToAdd = milestone.points - verifyPointMax(pointNumber)
+				milestone.points = verifyPointMax(pointNumber)
+				-- Adjust total points accordingly if the milestone has already been obtained
+				if milestone.obtained and pointsToAdd ~= 0 then
+					self.ExtSettingsData.TotalPoints:addPoints(pointsToAdd)
+					CrozTourneyScreen.refreshButtons()
+				end
+				updateSettings()
+				Program.redraw(true)
+			end
+			client.unpause()
+			forms.destroy(form)
+		end, 72, 60)
+		forms.button(form, "Cancel", function()
+			client.unpause()
+			forms.destroy(form)
+		end, 157, 60)
+	end
+
+	local promptLoadMilestoneList = function()
+		local form = Utils.createBizhawkForm("Load/Share Milestone List", 520, 270)
+		Utils.setFormLocation(form, 80, 20)
+
+		local AMList = self.ExtSettingsData.ActiveMilestoneList
+		AMList:updateSelf()
+		local shareableListCurrent = AMList.value
+
+		forms.label(form, "Load a list of milestones from someone else by pasting the list here. [Ctrl + V]", 9, 10, 495, 20)
+		local importBox = forms.textbox(form, "", 485, 48, nil, 10, 32, true, false, "Vertical")
+
+		forms.label(form, "All current milestones you're playing with. Copy the list below and share with others. [Ctrl + C]", 9, 122, 495, 20)
+		local currentBox = forms.textbox(form, shareableListCurrent, 485, 48, nil, 10, 142, true, false, "Vertical")
+
+		forms.button(form, "Load the above Milestone List", function()
+			local importListCode = forms.gettext(importBox)
+			if importListCode ~= nil and importListCode ~= "" then
+				AMList:parse(importListCode)
+				EditMilestonesScreen.refreshButtons()
+				Program.redraw(true)
+				client.unpause()
+				forms.destroy(form)
+			end
+		end, 9, 86, 170, 24)
+		forms.button(form, "(Default Milestone List)", function()
+			local defaultList = {}
+			for _, m in ipairs(defaultMilestones) do
+				defaultList[m.key] = m
+			end
+			local defaultListCode = AMList:exportToString(defaultList)
+			forms.settext(importBox, defaultListCode)
+		end, 361, 86, 135, 24)
+		forms.button(form, "Close", function()
+			client.unpause()
+			forms.destroy(form)
+		end, 220, 196, 70, 24)
+	end
+
+	-----------------------
+	-- CrozTourneyScreen --
+	-----------------------
 	CrozTourneyScreen.refreshButtons = function()
 		for _, button in pairs(CrozTourneyScreen.Buttons) do
 			if type(button.updateSelf) == "function" then
@@ -788,11 +1067,46 @@ local function CrozwordsTourneyExtension()
 		end
 	end
 	CrozTourneyScreen.Buttons = {
+		ViewCurrentScore = {
+			type = Constants.ButtonTypes.ICON_BORDER,
+			image = listPixelIcon or Constants.PixelImages.MAGNIFYING_GLASS,
+			text = "Milestones",
+			textColor = CrozTourneyScreen.Colors.text,
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 8, Constants.SCREEN.MARGIN + 54, 124, 16 },
+			boxColors = { CrozTourneyScreen.Colors.border, CrozTourneyScreen.Colors.boxFill },
+			onClick = function()
+				ViewCurrentScoreScreen.buildOutPagedButtons()
+				ViewCurrentScoreScreen.refreshButtons()
+				Program.changeScreenView(ViewCurrentScoreScreen)
+			end
+		},
+		EditMilestones = {
+			type = Constants.ButtonTypes.ICON_BORDER,
+			image = Constants.PixelImages.GEAR,
+			text = "Edit milestone list",
+			textColor = CrozTourneyScreen.Colors.text,
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 8, Constants.SCREEN.MARGIN + 74, 124, 16 },
+			boxColors = { CrozTourneyScreen.Colors.border, CrozTourneyScreen.Colors.boxFill },
+			onClick = function()
+				EditMilestonesScreen.buildOutPagedButtons()
+				EditMilestonesScreen.refreshButtons()
+				Program.changeScreenView(EditMilestonesScreen)
+			end
+		},
+		ShareScore = {
+			type = Constants.ButtonTypes.ICON_BORDER,
+			image = Constants.PixelImages.INSTALL_BOX,
+			text = "Share current seed score",
+			textColor = CrozTourneyScreen.Colors.text,
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 8, Constants.SCREEN.MARGIN + 94, 124, 16 },
+			boxColors = { CrozTourneyScreen.Colors.border, CrozTourneyScreen.Colors.boxFill },
+			onClick = function() openSharePointsPopup(CrozTourneyScreen.refreshButtons) end
+		},
 		TotalScore = {
 			type = Constants.ButtonTypes.NO_BORDER,
 			text = "",
 			textColor = "Intermediate text",
-			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 101, Constants.SCREEN.MARGIN + 14, 35, 11 },
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 101, Constants.SCREEN.MARGIN + 116, 35, 11 },
 			boxColors = { CrozTourneyScreen.Colors.border, CrozTourneyScreen.Colors.boxFill },
 			updateSelf = function(this)
 				this.text = tostring(self.ExtSettingsData.TotalPoints.value or 0)
@@ -803,28 +1117,6 @@ local function CrozwordsTourneyExtension()
 				Drawing.drawImageAsPixels(Constants.PixelImages.NOTEPAD, iconOffsetX, this.box[2], Theme.COLORS[CrozTourneyScreen.Colors.text], shadowcolor)
 			end,
 			onClick = function() openEditPointsPopup(CrozTourneyScreen.refreshButtons) end
-		},
-		ViewCurrentScore = {
-			type = Constants.ButtonTypes.ICON_BORDER,
-			image = listPixelIcon or Constants.PixelImages.MAGNIFYING_GLASS,
-			text = "View Milestones",
-			textColor = CrozTourneyScreen.Colors.text,
-			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 8, Constants.SCREEN.MARGIN + 80, 124, 16 },
-			boxColors = { CrozTourneyScreen.Colors.border, CrozTourneyScreen.Colors.boxFill },
-			onClick = function()
-				ViewCurrentScoreScreen.buildOutPagedButtons()
-				ViewCurrentScoreScreen.refreshButtons()
-				Program.changeScreenView(ViewCurrentScoreScreen)
-			end
-		},
-		ShareScore = {
-			type = Constants.ButtonTypes.ICON_BORDER,
-			image = Constants.PixelImages.INSTALL_BOX,
-			text = "Share Current Seed Score",
-			textColor = CrozTourneyScreen.Colors.text,
-			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 8, Constants.SCREEN.MARGIN + 101, 124, 16 },
-			boxColors = { CrozTourneyScreen.Colors.border, CrozTourneyScreen.Colors.boxFill },
-			onClick = function() openSharePointsPopup(CrozTourneyScreen.refreshButtons) end
 		},
 		Back = {
 			type = Constants.ButtonTypes.FULL_BORDER,
@@ -843,8 +1135,8 @@ local function CrozwordsTourneyExtension()
 		},
 	}
 	-- Add screen buttons
-	local buttonOffsetY = Constants.SCREEN.MARGIN + 32
-	for _, settingsOption in ipairs({self.ExtSettingsData.AutoCountPoints, self.ExtSettingsData.RequireEscapeArea, self.ExtSettingsData.SkipFailedAttempts}) do
+	local buttonOffsetY = Constants.SCREEN.MARGIN + 14
+	for _, settingsOption in ipairs({self.ExtSettingsData.AutoCountPoints, self.ExtSettingsData.SkipFailedAttempts, self.ExtSettingsData.RequireEscapeArea}) do
 		local screenButton = {
 			type = Constants.ButtonTypes.CHECKBOX,
 			text = settingsOption.label,
@@ -897,8 +1189,16 @@ local function CrozwordsTourneyExtension()
 		end
 	end
 
+	----------------------------
+	-- ViewCurrentScoreScreen --
+	----------------------------
 	ViewCurrentScoreScreen.refreshButtons = function()
 		for _, button in pairs(ViewCurrentScoreScreen.Buttons) do
+			if type(button.updateSelf) == "function" then
+				button:updateSelf()
+			end
+		end
+		for _, button in pairs(ViewCurrentScoreScreen.Pager.Buttons) do
 			if type(button.updateSelf) == "function" then
 				button:updateSelf()
 			end
@@ -1033,6 +1333,7 @@ local function CrozwordsTourneyExtension()
 							unobtainMilestone(this.milestone)
 						end
 						this:updateSelf()
+						CrozTourneyScreen.refreshButtons()
 						Program.redraw(true)
 					end,
 				}
@@ -1073,7 +1374,7 @@ local function CrozwordsTourneyExtension()
 		local headerPoints = ViewCurrentScoreScreen.Buttons.TotalScore.text or Constants.BLANKLINE
 		Drawing.drawText(claimedColumnOffsetX + 12, offsetY, headerPoints, Theme.COLORS["Positive text"], topBox.shadow)
 		offsetY = offsetY + 11
-		Drawing.drawText(topBox.x + 3, offsetY, "Click below to claim or remove:", topBox.text, topBox.shadow)
+		Drawing.drawText(topBox.x + 3, offsetY, "Click below to claim or remove", topBox.text, topBox.shadow)
 		offsetY = offsetY + 15
 
 		-- Draw header labels
@@ -1091,6 +1392,295 @@ local function CrozwordsTourneyExtension()
 			Drawing.drawButton(button, topBox.shadow)
 		end
 		for _, button in pairs(ViewCurrentScoreScreen.Pager.Buttons) do
+			Drawing.drawButton(button, topBox.shadow)
+		end
+	end
+
+	--------------------------
+	-- EditMilestonesScreen --
+	--------------------------
+	EditMilestonesScreen.refreshButtons = function()
+		for _, button in pairs(EditMilestonesScreen.Buttons) do
+			if type(button.updateSelf) == "function" then
+				button:updateSelf()
+			end
+		end
+		for _, button in pairs(EditMilestonesScreen.Pager.Buttons) do
+			if type(button.updateSelf) == "function" then
+				button:updateSelf()
+			end
+		end
+	end
+	EditMilestonesScreen.Pager = {
+		Buttons = {},
+		currentPage = 0,
+		totalPages = 0,
+		realignButtonsToGrid = function(this, x, y, colSpacer, rowSpacer)
+			table.sort(this.Buttons, this.defaultSort)
+			local cutoffX = Constants.SCREEN.WIDTH + Constants.SCREEN.RIGHT_GAP - Constants.SCREEN.MARGIN
+			local cutoffY = Constants.SCREEN.HEIGHT - 25
+			local totalPages = Utils.gridAlign(this.Buttons, x, y, colSpacer, rowSpacer, false, cutoffX, cutoffY)
+			this.currentPage = 1
+			this.totalPages = totalPages or 1
+			EditMilestonesScreen.Buttons.CurrentPage:updateSelf()
+		end,
+		defaultSort = function(a, b) return a.ordinal < b.ordinal end,
+		getPageText = function(this)
+			if this.totalPages <= 1 then return "Page" end
+			return string.format("Page %s/%s", this.currentPage, this.totalPages)
+		end,
+		prevPage = function(this)
+			if this.totalPages <= 1 then return end
+			this.currentPage = ((this.currentPage - 2 + this.totalPages) % this.totalPages) + 1
+		end,
+		nextPage = function(this)
+			if this.totalPages <= 1 then return end
+			this.currentPage = (this.currentPage % this.totalPages) + 1
+		end,
+	}
+	EditMilestonesScreen.Buttons = {
+		CurrentPage = {
+			type = Constants.ButtonTypes.NO_BORDER,
+			text = "", -- Set later via updateSelf()
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 52, Constants.SCREEN.MARGIN + 135, 50, 10, },
+			isVisible = function() return EditMilestonesScreen.Pager.totalPages > 1 end,
+			updateSelf = function(this)
+				this.text = EditMilestonesScreen.Pager:getPageText()
+			end,
+		},
+		PrevPage = {
+			type = Constants.ButtonTypes.PIXELIMAGE,
+			image = Constants.PixelImages.LEFT_ARROW,
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 38, Constants.SCREEN.MARGIN + 136, 10, 10, },
+			isVisible = function() return EditMilestonesScreen.Pager.totalPages > 1 end,
+			onClick = function(this)
+				EditMilestonesScreen.Pager:prevPage()
+				EditMilestonesScreen.Buttons.CurrentPage:updateSelf()
+				Program.redraw(true)
+			end
+		},
+		NextPage = {
+			type = Constants.ButtonTypes.PIXELIMAGE,
+			image = Constants.PixelImages.RIGHT_ARROW,
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 97, Constants.SCREEN.MARGIN + 136, 10, 10, },
+			isVisible = function() return EditMilestonesScreen.Pager.totalPages > 1 end,
+			onClick = function(this)
+				EditMilestonesScreen.Pager:nextPage()
+				EditMilestonesScreen.Buttons.CurrentPage:updateSelf()
+				Program.redraw(true)
+			end
+		},
+		Load = {
+			type = Constants.ButtonTypes.FULL_BORDER,
+			text = "Load",
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 4, Constants.SCREEN.MARGIN + 135, 24, 11 },
+			onClick = function(this) promptLoadMilestoneList() end
+		},
+		Back = {
+			type = Constants.ButtonTypes.FULL_BORDER,
+			text = "Back",
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 112, Constants.SCREEN.MARGIN + 135, 24, 11 },
+			onClick = function(this)
+				updateSettings()
+				saveSettingsData()
+				Program.changeScreenView(CrozTourneyScreen)
+			end
+		},
+	}
+	for _, button in pairs(EditMilestonesScreen.Buttons) do
+		if button.textColor == nil then
+			button.textColor = EditMilestonesScreen.Colors.text
+		end
+		if button.boxColors == nil then
+			button.boxColors = { EditMilestonesScreen.Colors.border, EditMilestonesScreen.Colors.boxFill }
+		end
+	end
+	EditMilestonesScreen.buildOutPagedButtons = function()
+		EditMilestonesScreen.Pager.Buttons = {}
+
+		for key, milestone in pairs(self.Milestones) do
+			local ordinalIndex = milestone.ordinal * 100
+			local milestoneBoxBtn = {
+				type = Constants.ButtonTypes.CHECKBOX,
+				boxColors = { EditMilestonesScreen.Colors.border, EditMilestonesScreen.Colors.boxFill, },
+				key = key,
+				milestone = milestone,
+				ordinal = ordinalIndex,
+				dimensions = { width = 8, height = 8, },
+				toggleState = not milestone.exclude,
+				toggleColor = "Positive text",
+				isVisible = function(this) return EditMilestonesScreen.Pager.currentPage == this.pageVisible end,
+				updateSelf = function(this)
+					this.toggleState = not milestone.exclude
+				end,
+				onClick = function(this)
+					milestone.exclude = not milestone.exclude
+					-- If the milestone is already obtained, add/remove points
+					if milestone.obtained then
+						local changeToPoints = milestone.points or 0
+						if milestone.exclude then
+							changeToPoints = -1 * changeToPoints
+						end
+						if changeToPoints ~= 0 then
+							self.ExtSettingsData.TotalPoints:addPoints(changeToPoints)
+							updateSettings()
+							saveLaterFrames = 150
+						end
+					end
+					this:updateSelf()
+					CrozTourneyScreen.refreshButtons()
+					Program.redraw(true)
+				end,
+			}
+			local milestoneTextBtn = {
+				type = Constants.ButtonTypes.NO_BORDER,
+				textColor = EditMilestonesScreen.Colors.text,
+				boxColors = { EditMilestonesScreen.Colors.border, EditMilestonesScreen.Colors.boxFill, },
+				ordinal = ordinalIndex + 1,
+				dimensions = { width = 80, height = 11, },
+				isVisible = function(this) return EditMilestonesScreen.Pager.currentPage == this.pageVisible end,
+				draw = function(this, shadowcolor)
+					local milestoneText = milestone.label or key
+					Drawing.drawText(this.box[1] + 1, this.box[2] - 2, milestoneText, Theme.COLORS[this.textColor], shadowcolor)
+				end,
+				onClick = function(this)
+					milestoneBoxBtn:onClick()
+				end,
+			}
+			local pointsBtn = {
+				type = Constants.ButtonTypes.NO_BORDER,
+				textColor = EditMilestonesScreen.Colors.text,
+				boxColors = { EditMilestonesScreen.Colors.border, EditMilestonesScreen.Colors.boxFill, },
+				ordinal = ordinalIndex + 2,
+				dimensions = { width = 20, height = 11, },
+				isVisible = function(this) return EditMilestonesScreen.Pager.currentPage == this.pageVisible end,
+				draw = function(this, shadowcolor)
+					if milestone.exclude then
+						return
+					end
+
+					local points = milestone.points or 0
+					local pointsText = tostring(points)
+
+					local xOffset = 1
+					if points < 0 then
+						xOffset = xOffset - 2 -- 2 pixels for the negative sign
+					end
+					if math.abs(points) < 10 then
+						xOffset = xOffset + 5 -- 5 pixels for centering
+					elseif math.abs(points) < 100 then
+						xOffset = xOffset + 2 -- 2 pixels for centering
+					end
+
+					Drawing.drawText(this.box[1] + xOffset, this.box[2] - 2, pointsText, Theme.COLORS[this.textColor], shadowcolor)
+				end,
+				onClick = function(this)
+					if not milestone.exclude then
+						promptMilestoneSetPoint(milestone)
+					end
+				end,
+			}
+			local spacer = {
+				ordinal = ordinalIndex + 3,
+				dimensions = { width = 2, height = 11, },
+			}
+			local plusBtn = {
+				type = Constants.ButtonTypes.FULL_BORDER,
+				textColor = "Positive text",
+				boxColors = { EditMilestonesScreen.Colors.border, EditMilestonesScreen.Colors.boxFill, },
+				ordinal = ordinalIndex + 4,
+				dimensions = { width = 8, height = 8 },
+				isVisible = function(this) return not milestone.exclude and EditMilestonesScreen.Pager.currentPage == this.pageVisible end,
+				draw = function(this, shadowcolor)
+					Drawing.drawText(this.box[1], this.box[2] - 1, "+", Theme.COLORS[this.textColor], shadowcolor)
+				end,
+				onClick = function(this)
+					milestone.points = verifyPointMax(milestone.points + 1)
+					-- Adjust total points accordingly if the milestone has already been obtained
+					if milestone.obtained then
+						self.ExtSettingsData.TotalPoints:addPoints(1)
+						CrozTourneyScreen.refreshButtons()
+					end
+					Program.redraw(true)
+				end,
+			}
+			local minusBtn = {
+				type = Constants.ButtonTypes.FULL_BORDER,
+				textColor = "Negative text",
+				boxColors = { EditMilestonesScreen.Colors.border, EditMilestonesScreen.Colors.boxFill, },
+				ordinal = ordinalIndex + 5,
+				dimensions = { width = 8, height = 8, extraX = -1, },
+				isVisible = function(this) return not milestone.exclude and EditMilestonesScreen.Pager.currentPage == this.pageVisible end,
+				draw = function(this, shadowcolor)
+					local x, y = this.box[1] + 3, this.box[2] + 4
+					if Theme.DRAW_TEXT_SHADOWS then
+						gui.drawLine(x + 1, y + 1, x + 3, y + 1, shadowcolor)
+					end
+					gui.drawLine(x, y, x + 2, y, Theme.COLORS[this.textColor])
+				end,
+				onClick = function(this)
+					milestone.points = verifyPointMax(milestone.points - 1)
+					-- Adjust total points accordingly if the milestone has already been obtained
+					if milestone.obtained then
+						self.ExtSettingsData.TotalPoints:addPoints(-1)
+						CrozTourneyScreen.refreshButtons()
+					end
+					Program.redraw(true)
+				end,
+			}
+
+			-- Order here doesn't matter, it's determined above by "button.ordinal"
+			table.insert(EditMilestonesScreen.Pager.Buttons, milestoneBoxBtn)
+			table.insert(EditMilestonesScreen.Pager.Buttons, milestoneTextBtn)
+			table.insert(EditMilestonesScreen.Pager.Buttons, pointsBtn)
+			table.insert(EditMilestonesScreen.Pager.Buttons, spacer)
+			table.insert(EditMilestonesScreen.Pager.Buttons, minusBtn)
+			table.insert(EditMilestonesScreen.Pager.Buttons, plusBtn)
+		end
+
+		local x = Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 4
+		local y = Constants.SCREEN.MARGIN + 20
+		local colSpacer = 1
+		local rowSpacer = 3
+		EditMilestonesScreen.Pager:realignButtonsToGrid(x, y, colSpacer, rowSpacer)
+
+		return true
+	end
+	EditMilestonesScreen.checkInput = function(xmouse, ymouse)
+		Input.checkButtonsClicked(xmouse, ymouse, EditMilestonesScreen.Buttons)
+		Input.checkButtonsClicked(xmouse, ymouse, EditMilestonesScreen.Pager.Buttons)
+	end
+	EditMilestonesScreen.drawScreen = function()
+		Drawing.drawBackgroundAndMargins()
+		gui.defaultTextBackground(Theme.COLORS[EditMilestonesScreen.Colors.boxFill])
+		local topBox = {
+			x = Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN,
+			y = Constants.SCREEN.MARGIN,
+			width = Constants.SCREEN.RIGHT_GAP - (Constants.SCREEN.MARGIN * 2),
+			height = Constants.SCREEN.HEIGHT - (Constants.SCREEN.MARGIN * 2),
+			text = Theme.COLORS[EditMilestonesScreen.Colors.text],
+			border = Theme.COLORS[EditMilestonesScreen.Colors.border],
+			fill = Theme.COLORS[EditMilestonesScreen.Colors.boxFill],
+			shadow = Utils.calcShadowColor(Theme.COLORS[EditMilestonesScreen.Colors.boxFill]),
+		}
+		local offsetY = topBox.y + 2
+
+		gui.drawRectangle(topBox.x, topBox.y, topBox.width, topBox.height, topBox.border, topBox.fill)
+
+		-- Draw header labels
+		local pointsColX = topBox.x + 96
+		Drawing.drawText(topBox.x + 3, offsetY, "Active Milestone", Theme.COLORS["Intermediate text"], topBox.shadow)
+		Drawing.drawText(pointsColX, offsetY, "Points", Theme.COLORS["Intermediate text"], topBox.shadow)
+
+		-- Draw header underlines
+		offsetY = offsetY + 11
+		gui.drawLine(topBox.x + 4, offsetY, topBox.x + 92, offsetY, topBox.border)
+		gui.drawLine(pointsColX + 1, offsetY, pointsColX + 38, offsetY, topBox.border)
+
+		for _, button in pairs(EditMilestonesScreen.Buttons) do
+			Drawing.drawButton(button, topBox.shadow)
+		end
+		for _, button in pairs(EditMilestonesScreen.Pager.Buttons) do
 			Drawing.drawButton(button, topBox.shadow)
 		end
 	end
@@ -1208,6 +1798,7 @@ local function CrozwordsTourneyExtension()
 
 		-- If the current game is a new game, clear out the milestones
 		if Tracker.DataMessage:find(Tracker.LoadStatusMessages.fromFile) == nil then
+			-- TODO: Doesn't cover a case where the extension gets updated in the middle of a run that was started on the same day.
 			resetMilestones()
 		end
 
