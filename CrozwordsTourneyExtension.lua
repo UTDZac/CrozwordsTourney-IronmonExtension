@@ -4,7 +4,7 @@ local function CrozwordsTourneyExtension()
 	self.name = "Tourney Point Tracker"
 	self.author = "UTDZac"
 	self.description = "This extension adds extra functionality to the Tracker for counting and displaying points, great for friendly competitions."
-	self.version = "3.0"
+	self.version = "3.1"
 	self.url = "https://github.com/UTDZac/CrozwordsTourney-IronmonExtension"
 
 	function self.checkForUpdates()
@@ -1796,9 +1796,12 @@ local function CrozwordsTourneyExtension()
 		resetMilestones()
 		loadSettingsData()
 
+
 		-- If the current game is a new game, clear out the milestones
-		if Tracker.DataMessage:find(Tracker.LoadStatusMessages.fromFile) == nil then
-			-- TODO: Doesn't cover a case where the extension gets updated in the middle of a run that was started on the same day.
+		-- TODO: Doesn't cover a case where the extension gets updated in the middle of a run that was started on the same day.
+		local legacyLoadStatus = Tracker.DataMessage and Tracker.LoadStatusMessages and Tracker.DataMessage:find(Tracker.LoadStatusMessages.fromFile) == nil
+		local newLoadStatus = Tracker.LoadStatusKeys and Tracker.LoadStatus == Tracker.LoadStatusKeys.NEW_GAME
+		if legacyLoadStatus or newLoadStatus then
 			resetMilestones()
 		end
 
