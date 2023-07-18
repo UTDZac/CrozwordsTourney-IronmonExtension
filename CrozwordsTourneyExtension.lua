@@ -4,7 +4,7 @@ local function CrozwordsTourneyExtension()
 	self.name = "Tourney Point Tracker"
 	self.author = "UTDZac"
 	self.description = "This extension adds extra functionality to the Tracker for counting and displaying points, great for friendly competitions."
-	self.version = "3.1"
+	self.version = "3.2"
 	self.url = "https://github.com/UTDZac/CrozwordsTourney-IronmonExtension"
 
 	function self.checkForUpdates()
@@ -1751,18 +1751,22 @@ local function CrozwordsTourneyExtension()
 			type = Constants.ButtonTypes.NO_BORDER,
 			-- text = "",
 			-- getText = function() return "" end,
-			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 2, Constants.SCREEN.MARGIN + 23, 75, 11 },
+			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 2, Constants.SCREEN.MARGIN + 23, 90, 11 },
 			boxColors = { "Intermediate text", "Upper box background", },
 			isVisible = function() return shouldSeedBeCounted() end,
 			draw = function(this, shadowcolor)
+				local x, y = this.box[1], this.box[2]
+				local width, height = this.box[3], this.box[4]
+				gui.drawRectangle(x, y, width, height, Theme.COLORS[this.boxColors[2]], Theme.COLORS[this.boxColors[2]])
+
 				shadowcolor = Utils.calcShadowColor(Theme.COLORS[this.boxColors[2]])
 				local text = string.format("Seed Points:  %s", getCurrentSeedPointTotal() or 0)
-				Drawing.drawText(this.box[1], this.box[2], text, Theme.COLORS["Default text"], shadowcolor)
+				Drawing.drawText(x, this.box[2], text, Theme.COLORS["Default text"], shadowcolor)
 
 				local shareText = "(Share)"
 				local offsetX = Utils.calcWordPixelLength(text) + 6
-				-- Drawing.drawImageAsPixels(Constants.PixelImages.MAGNIFYING_GLASS, this.box[1] + offsetX, this.box[2] + 1, Theme.COLORS["Intermediate text"], shadowcolor)
-				Drawing.drawText(this.box[1] + offsetX, this.box[2], shareText, Theme.COLORS["Intermediate text"], shadowcolor)
+				-- Drawing.drawImageAsPixels(Constants.PixelImages.MAGNIFYING_GLASS, x + offsetX, y + 1, Theme.COLORS["Intermediate text"], shadowcolor)
+				Drawing.drawText(x + offsetX, y, shareText, Theme.COLORS["Intermediate text"], shadowcolor)
 			end,
 			onClick = function() openSharePointsPopup() end,
 		}
