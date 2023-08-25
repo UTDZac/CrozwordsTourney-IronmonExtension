@@ -4,7 +4,7 @@ local function CrozwordsTourneyExtension()
 	self.name = "Tourney Point Tracker"
 	self.author = "UTDZac"
 	self.description = "This extension adds extra functionality to the Tracker for counting and displaying points, great for friendly competitions."
-	self.version = "3.2"
+	self.version = "3.3"
 	self.url = "https://github.com/UTDZac/CrozwordsTourney-IronmonExtension"
 
 	function self.checkForUpdates()
@@ -1118,22 +1118,16 @@ local function CrozwordsTourneyExtension()
 			end,
 			onClick = function() openEditPointsPopup(CrozTourneyScreen.refreshButtons) end
 		},
-		Back = {
-			type = Constants.ButtonTypes.FULL_BORDER,
-			text = "Back",
-			textColor = CrozTourneyScreen.Colors.text,
-			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 112, Constants.SCREEN.MARGIN + 135, 24, 11 },
-			boxColors = { CrozTourneyScreen.Colors.border, CrozTourneyScreen.Colors.boxFill },
-			onClick = function()
-				if previousScreen ~= nil then
-					Program.changeScreenView(previousScreen)
-					previousScreen = nil
-				else
-					Program.changeScreenView(SingleExtensionScreen)
-				end
+		Back = Drawing.createUIElementBackButton(function()
+			if previousScreen ~= nil then
+				Program.changeScreenView(previousScreen)
+				previousScreen = nil
+			else
+				Program.changeScreenView(SingleExtensionScreen)
 			end
-		},
+		end, CrozTourneyScreen.Colors.text),
 	}
+	CrozTourneyScreen.Buttons.Back.boxColors = { CrozTourneyScreen.Colors.border, CrozTourneyScreen.Colors.boxFill }
 	-- Add screen buttons
 	local buttonOffsetY = Constants.SCREEN.MARGIN + 14
 	for _, settingsOption in ipairs({self.ExtSettingsData.AutoCountPoints, self.ExtSettingsData.SkipFailedAttempts, self.ExtSettingsData.RequireEscapeArea}) do
@@ -1278,12 +1272,7 @@ local function CrozwordsTourneyExtension()
 				Program.redraw(true)
 			end
 		},
-		Back = {
-			type = Constants.ButtonTypes.FULL_BORDER,
-			text = "Back",
-			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 112, Constants.SCREEN.MARGIN + 135, 24, 11 },
-			onClick = function(this) Program.changeScreenView(CrozTourneyScreen) end
-		},
+		Back = Drawing.createUIElementBackButton(function() Program.changeScreenView(CrozTourneyScreen) end),
 	}
 	for _, button in pairs(ViewCurrentScoreScreen.Buttons) do
 		if button.textColor == nil then
@@ -1476,16 +1465,11 @@ local function CrozwordsTourneyExtension()
 			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 4, Constants.SCREEN.MARGIN + 135, 24, 11 },
 			onClick = function(this) promptLoadMilestoneList() end
 		},
-		Back = {
-			type = Constants.ButtonTypes.FULL_BORDER,
-			text = "Back",
-			box = { Constants.SCREEN.WIDTH + Constants.SCREEN.MARGIN + 112, Constants.SCREEN.MARGIN + 135, 24, 11 },
-			onClick = function(this)
-				updateSettings()
-				saveSettingsData()
-				Program.changeScreenView(CrozTourneyScreen)
-			end
-		},
+		Back = Drawing.createUIElementBackButton(function()
+			updateSettings()
+			saveSettingsData()
+			Program.changeScreenView(CrozTourneyScreen)
+		end),
 	}
 	for _, button in pairs(EditMilestonesScreen.Buttons) do
 		if button.textColor == nil then
@@ -1800,6 +1784,12 @@ local function CrozwordsTourneyExtension()
 		resetMilestones()
 		loadSettingsData()
 
+		-- Display a visual reminder that the attempts increments are skipped because this option is turned on
+		if self.ExtSettingsData.SkipFailedAttempts.value then
+			print("")
+			print("[Tourney Option] Only count runs out of the lab: ON")
+			print("> Quickload won't increase the Attempts # unless you escape the lab.")
+		end
 
 		-- If the current game is a new game, clear out the milestones
 		-- TODO: Doesn't cover a case where the extension gets updated in the middle of a run that was started on the same day.
