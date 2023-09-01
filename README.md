@@ -25,6 +25,6 @@ This extension autotracks points based on milestone conditions defined by the [C
    > ![image](https://user-images.githubusercontent.com/4258818/235509077-1fb091d5-81bb-4d48-81f1-5f165fa3d83e.png)
 3) On the Tracker, click the **Gear** icon -> **Extensions**
 4) If the checkbox "**Allow custom code to run**" is unchecked, click it to enable
-5) Click the "**Refresh**" button to reveal newly installed extensions
+5) Click the **"Install New"** or **"Refresh"** button to reveal newly installed extensions
    > ![image](https://user-images.githubusercontent.com/4258818/235510811-425be042-81e0-44b0-bb10-5f1bba91b7ba.png)
 6) Click on the extension, then click the **OFF/ON** button to turn it on
